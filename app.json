@@ -1,24 +1,74 @@
 {
   "expo": {
-    "name": "ScheduleAlarm_app",
-    "slug": "ScheduleAlarm_app",
-    "version": "1.0.0",
-    "orientation": "portrait",
+    "name": "小舒日程闹钟",
+    "slug": "xiaoshu",
+    "version": "1.2.0",
+    "orientation": "default",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
+    "scheme": "schedule-alarm",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.xiaoshu.schedulealarm",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio",
+          "fetch",
+          "remote-notification",
+          "audio",
+          "fetch",
+          "remote-notification"
+        ],
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true,
+          "NSAllowsLocalNetworking": true
+        },
+        "NSUserTrackingUsageDescription": "此标识符将用于为您提供更好的日程提醒服务",
+        "NSCalendarsUsageDescription": "用于在系统日历中显示日程提醒",
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "com.xiaoshu.schedulealarm",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "permissions": [
+        "NOTIFICATIONS",
+        "SCHEDULE_EXACT_ALARM",
+        "USE_EXACT_ALARM",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "WAKE_LOCK",
+        "READ_EXTERNAL_STORAGE",
+        "FOREGROUND_SERVICE",
+        "POST_NOTIFICATIONS",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-audio",
+      "expo-background-task",
+      "expo-task-manager",
+      "expo-document-picker",
+      "expo-sqlite",
+      "expo-status-bar",
+      "expo-asset"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "2ee12ca8-92b2-410d-99bc-be5eb011045c"
+      }
+    },
+    "owner": "lijjiatu"
   }
 }
