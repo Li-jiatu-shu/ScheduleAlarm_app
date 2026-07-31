@@ -4,10 +4,20 @@
  * 提供语音播报、闹铃播放、振动等提醒功能。
  * speakEvent 支持 onDone 回调，用于语音结束后执行后续操作。
  * playAlarm 使用 expo-audio 播放闹钟铃声（支持熄屏播放）。
+ *
+ * 支持的音频资源：
+ * - alarm-sound.wav  — 短促闹铃，用于日程提醒弹窗
+ * - clock-sound.wav  — 长音频铃声，用于起床闹钟
  */
 import * as Speech from 'expo-speech';
 import { Platform, Vibration } from 'react-native';
 import { truncateText } from '../../utils/helpers';
+
+// 音频资源映射
+const AUDIO_ASSETS = {
+  alarm: require('../../../assets/alarm-sound.wav'),
+  clock: require('../../../assets/clock-sound.wav'),
+};
 
 // ---- TTS 语音播报 ----
 
@@ -92,21 +102,25 @@ let _alarmStopped = false;
 /**
  * 播放闹钟铃声（同时振动）
  * 使用 expo-audio 播放循环铃声，支持熄屏时继续播放。
+ *
  * @param {Object} options
- * @param {number} [options.volume=0.8] - 音量
+ * @param {number} [options.volume=0.8] - 音量 (0.0-1.0)
+ * @param {'alarm'|'clock'} [options.soundType='alarm'] - 音频类型
+ *   - 'alarm': 短促闹铃(alarm-sound.wav)，用于日程提醒弹窗
+ *   - 'clock': 长音频铃声(clock-sound.wav)，用于起床闹钟
+ * @param {boolean} [options.loop=true] - 是否循环播放（起床闹钟建议 true）
  * @returns {{ stop: Function }} 返回 stop 方法用于停止
  */
 export async function playAlarm(options = {}) {
-  const { volume = 0.8 } = options;
+  const { volume = 0.8, soundType = 'alarm', loop = true } = options;
   _alarmStopped = false;
 
   // 振动提醒（持续循环直至停止）
   const startVibration = () => {
     const PATTERN = [0, 400, 300, 400, 300, 400];
     Vibration.vibrate(PATTERN);
-    // 使用重复振动模式替代 setInterval（Android 支持 repeat）
+    // 使用重复振动模式
     if (Platform.OS === 'android') {
-      // Android 振动会持续到被取消
       _vibrateInterval = setInterval(() => {
         if (!_alarmStopped) Vibration.vibrate(PATTERN);
       }, 2200);
@@ -124,22 +138,21 @@ export async function playAlarm(options = {}) {
     const { AudioPlayer } = require('expo-audio');
     const player = new AudioPlayer();
     player.volume = volume;
-    player.loop = true;
+    player.loop = loop;
     _alarmPlayer = player;
 
-    // 尝试播放内置闹钟音频文件
+    // 根据 soundType 选择音频资源
+    const audioAsset = AUDIO_ASSETS[soundType] || AUDIO_ASSETS.alarm;
+
     try {
-      // 使用 require 加载本地音频资源
-      const alarmAsset = require('../../../assets/alarm-sound.wav');
-      await player.play(alarmAsset);
+      await player.play(audioAsset);
     } catch (assetErr) {
-      console.warn('无法加载内置闹钟音频，尝试系统路径:', assetErr.message);
-      // 回退：尝试通过 URI 播放
+      console.warn(`无法加载${soundType}音频，尝试回退:`, assetErr.message);
+      // 回退：尝试使用默认闹钟音频
       try {
-        await player.play({ uri: 'asset:///alarm-sound.wav' });
-      } catch (uriErr) {
-        console.warn('闹钟音频播放失败，仅使用振动+语音:', uriErr.message);
-        // 无铃声时振动+语音依然有效
+        await player.play(AUDIO_ASSETS.alarm);
+      } catch (fallbackErr) {
+        console.warn('闹钟音频播放失败，仅使用振动+语音:', fallbackErr.message);
       }
     }
 

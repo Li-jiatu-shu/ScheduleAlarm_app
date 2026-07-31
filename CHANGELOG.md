@@ -4,6 +4,53 @@ All notable changes to 小舒日程闹钟 will be documented in this file.
 
 ---
 
+## [1.2.1] — 2026-07-31
+
+### 🔧 Fixed
+- **前台报警队列机制**：修复 v1.2.0 中"13:30后无弹窗提醒"的严重 bug。根因是单报警模型导致 `alarmVisible` 阻塞所有后续检查，且补偿窗口仅2分钟。现已重构为报警队列模式：扫描所有匹配事件 → 排队 → 依次触发 → 自动处理队列。
+- 补偿检查窗口从 ±5 分钟扩展至 ±30 分钟
+- 前台系统通知现在会触发 ReminderModal（修复空监听器）
+
+### ✨ Added
+- **倒计时功能**：用户可手动设置目标日期并定义意义（考试、报名、截止等），支持同时显示多个倒计时，在首页以紧凑卡片形式展示剩余天数
+  - `CountdownCard` — 倒计时卡片（紧凑/完整两种模式，天数越近颜色越紧急）
+  - `CountdownEditor` — 可视化编辑弹窗（日期输入、类型选择、颜色、图标、提醒天数）
+  - `CountdownManagerScreen` — 倒计时管理页面（增删改查）
+- **番茄钟计时器**：25分钟工作 / 5分钟休息循环，每4个番茄钟后长休息15分钟。首页浮动按钮唤起。
+- **数据导出**：支持将全部日程导出为可读文本格式，通过系统分享面板发送
+- **多日程方案切换**：支持保存/加载/删除命名日程方案，可在不同日程配置间快速切换
+
+### 🔄 Changed
+- `useAlarmChecker.js`：完全重写为报警队列模式
+- `useNotifications.js`：新增前台通知处理器注册机制
+- `NotificationScheduler.js`：`findMissedEvents` 窗口扩展至 ±30分钟
+- `App.js`：桥接前台通知处理器与报警触发器
+- `HomeScreen.js`：新增倒计时展示区 + 番茄钟浮动按钮
+- `Database.js`：新增倒计时 CRUD + 日程方案管理
+- `AppNavigator.js`：新增 CountdownManager 路由
+- `SettingsScreen.js`：数据导出功能、日程方案管理、版本号更新
+- `zh.js`：新增 countdown 翻译段
+- 版本号升级至 v1.2.1
+
+### 📝 Files Changed
+| 文件 | 操作 |
+|------|------|
+| `src/hooks/useAlarmChecker.js` | 重写 |
+| `src/hooks/useNotifications.js` | 修改 |
+| `src/modules/scheduler/NotificationScheduler.js` | 修改 |
+| `App.js` | 修改 |
+| `src/modules/storage/Database.js` | 修改 |
+| `src/screens/HomeScreen.js` | 修改 |
+| `src/screens/SettingsScreen.js` | 修改 |
+| `src/navigation/AppNavigator.js` | 修改 |
+| `src/i18n/zh.js` | 修改 |
+| `src/components/CountdownCard.js` | 新增 |
+| `src/components/CountdownEditor.js` | 新增 |
+| `src/components/PomodoroTimer.js` | 新增 |
+| `src/screens/CountdownManagerScreen.js` | 新增 |
+
+---
+
 ## [1.2.0] — 2026-07-29
 
 ### 🔧 Fixed

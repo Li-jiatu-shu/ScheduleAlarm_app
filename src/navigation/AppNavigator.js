@@ -17,6 +17,7 @@ import ImportScreen from '../screens/ImportScreen';
 import StatsScreen from '../screens/StatsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import EditTaskScreen from '../screens/EditTaskScreen';
+import CountdownManagerScreen from '../screens/CountdownManagerScreen';
 
 import { useSettings } from '../context/SettingsContext';
 import { LightTheme, DarkTheme as AppDarkTheme } from '../utils/theme';
@@ -36,6 +37,14 @@ function HomeStack() {
         options={{
           headerShown: true,
           headerTitle: t('edit.title'),
+          presentation: 'modal',
+        }}
+      />
+      <Stack.Screen
+        name="CountdownManager"
+        component={CountdownManagerScreen}
+        options={{
+          headerShown: false,
           presentation: 'modal',
         }}
       />

@@ -6,26 +6,39 @@ import {
   View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { useSchedule } from '../context/ScheduleContext';
 import { useTheme } from '../hooks/useTheme';
 import DateNavigator from '../components/DateNavigator';
 import EmptyState from '../components/EmptyState';
 import CuteCard from '../components/CuteCard';
 import ProgressStars from '../components/ProgressStars';
+import CountdownCard from '../components/CountdownCard';
+import PomodoroTimer from '../components/PomodoroTimer';
 import { t } from '../i18n';
 import { getToday, getChineseWeekday } from '../utils/helpers';
+import * as Database from '../modules/storage/Database';
 
 export default function HomeScreen({ navigation }) {
   const theme = useTheme();
   const schedule = useSchedule();
   const [refreshing, setRefreshing] = useState(false);
   const [now, setNow] = useState(new Date());
+  const [countdowns, setCountdowns] = useState([]);
+  const [pomodoroVisible, setPomodoroVisible] = useState(false);
 
   // 每分钟更新当前时间
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
+
+  // 页面聚焦时加载倒计时
+  useFocusEffect(
+    useCallback(() => {
+      Database.getCountdowns().then(setCountdowns).catch(() => {});
+    }, [])
+  );
 
   const currentMin = now.getHours() * 60 + now.getMinutes();
 
@@ -142,6 +155,58 @@ export default function HomeScreen({ navigation }) {
       >
         {/* 日期导航 */}
         <DateNavigator currentDate={schedule.currentDate} onDateChange={schedule.changeDate} />
+
+        {/* 倒计时区域 */}
+        {countdowns.length > 0 && (
+          <View style={styles.countdownSection}>
+            <View style={styles.countdownHeader}>
+              <Text style={styles.countdownHeaderIcon}>⏳</Text>
+              <Text style={[styles.countdownHeaderTitle, { color: theme.textSecondary }]}>
+                倒计时
+              </Text>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('CountdownManager')}
+                style={[styles.countdownMoreBtn, { backgroundColor: theme.primary + '15' }]}
+              >
+                <Text style={[styles.countdownMoreText, { color: theme.primary }]}>
+                  管理
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.countdownScroll}
+            >
+              {countdowns
+                .filter((c) => c.enabled !== 0)
+                .sort((a, b) => (a.targetDate || '').localeCompare(b.targetDate || ''))
+                .map((c) => (
+                  <CountdownCard
+                    key={c.id}
+                    countdown={c}
+                    compact
+                    onPress={() => navigation.navigate('CountdownManager')}
+                  />
+                ))}
+              <TouchableOpacity
+                style={[styles.countdownAddCard, {
+                  backgroundColor: theme.surfaceSecondary,
+                  borderColor: theme.border,
+                }]}
+                onPress={() => navigation.navigate('CountdownManager')}
+              >
+                <Text style={styles.countdownAddIcon}>+</Text>
+                <Text style={[styles.countdownAddLabel, { color: theme.textTertiary }]}>
+                  添加
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        )}
+
+        {/* 如果没有任何事件且没有倒计时，显示导入引导 */}
+        {!displayEvent && countdowns.length === 0 && schedule.currentDate === getToday() ? null : null}
 
         {/* 吉祥物区域 */}
         <View style={styles.mascotRow}>
@@ -280,6 +345,21 @@ export default function HomeScreen({ navigation }) {
           </View>
         )}
       </ScrollView>
+
+      {/* 番茄钟浮动按钮 */}
+      <TouchableOpacity
+        style={[styles.pomodoroFab, { backgroundColor: theme.primary }]}
+        onPress={() => setPomodoroVisible(true)}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.pomodoroFabIcon}>🍅</Text>
+      </TouchableOpacity>
+
+      {/* 番茄钟计时器 */}
+      <PomodoroTimer
+        visible={pomodoroVisible}
+        onClose={() => setPomodoroVisible(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -373,6 +453,41 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
+  // 倒计时区域
+  countdownSection: {
+    marginHorizontal: 16,
+    marginBottom: 8,
+  },
+  countdownHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 10,
+  },
+  countdownHeaderIcon: { fontSize: 16 },
+  countdownHeaderTitle: { fontSize: 14, fontWeight: '700', flex: 1 },
+  countdownMoreBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  countdownMoreText: { fontSize: 12, fontWeight: '600' },
+  countdownScroll: {
+    paddingRight: 16,
+  },
+  countdownAddCard: {
+    width: 110,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 130,
+  },
+  countdownAddIcon: { fontSize: 32, color: '#B0ADBF', fontWeight: '300' },
+  countdownAddLabel: { fontSize: 12, fontWeight: '600', marginTop: 4 },
+
   // 后续任务区域
   upcomingSection: { marginHorizontal: 16, marginTop: 4 },
   upcomingHeader: {
@@ -408,5 +523,25 @@ const styles = StyleSheet.create({
   nextChipTitle: {
     fontSize: 13,
     fontWeight: '500',
+  },
+
+  // 番茄钟浮动按钮
+  pomodoroFab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 20,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  pomodoroFabIcon: {
+    fontSize: 24,
   },
 });

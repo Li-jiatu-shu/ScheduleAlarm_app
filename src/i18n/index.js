@@ -1,15 +1,16 @@
 /**
  * i18n 国际化入口
- * 预留多语言支持结构
+ * 支持中文(zh)和英文(en)切换
  */
 import zh from './zh';
+import en from './en';
 
-// 当前语言，后续可通过设置切换
+// 当前语言（默认中文）
 let currentLocale = 'zh';
 
 const translations = {
   zh,
-  // en: {}, // 预留英文翻译
+  en,
 };
 
 /**

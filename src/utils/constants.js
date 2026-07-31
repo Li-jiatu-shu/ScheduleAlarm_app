@@ -26,6 +26,13 @@ export const DEFAULT_SETTINGS = {
   autoLogCompletion: true,
   // 每日提醒摘要时间（HH:mm，null 表示关闭）
   dailySummaryTime: null,
+  // 起床闹钟
+  wakeUpEnabled: false,
+  wakeUpTime: '07:00',
+  wakeUpSoundType: 'clock',  // 'alarm' | 'clock'
+  wakeUpVolume: 0.9,
+  // 日程提醒铃声类型
+  reminderSoundType: 'alarm',  // 'alarm' | 'clock'
 };
 
 // 阶段关键词映射

@@ -6,8 +6,9 @@
  * - 绕过勿扰模式
  * - 锁屏界面显示
  * - 振动反馈
+ * - v1.2.1: 前台通知接收回调（桥接到 useAlarmChecker）
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 
@@ -23,6 +24,8 @@ Notifications.setNotificationHandler({
 
 export function useNotifications() {
   const [permissionGranted, setPermissionGranted] = useState(false);
+  // ref 用于存储外部注册的前台通知处理器
+  const foregroundHandlerRef = useRef(null);
 
   useEffect(() => {
     let notificationSub = null;
@@ -60,7 +63,6 @@ export function useNotifications() {
                 usage: Notifications.AndroidAudioUsage.ALARM,
                 contentType: Notifications.AndroidAudioContentType?.SONIFICATION || 2,
                 flags: {
-                  // 即使音频路由变化也保持播放
                   enforceAudible: true,
                 },
               };
@@ -101,7 +103,14 @@ export function useNotifications() {
 
     init();
 
-    notificationSub = Notifications.addNotificationReceivedListener(() => {});
+    // 前台收到通知时：如果外部注册了处理器则调用
+    notificationSub = Notifications.addNotificationReceivedListener((notification) => {
+      const data = notification.request?.content?.data;
+      if (data?.eventId && foregroundHandlerRef.current) {
+        foregroundHandlerRef.current(data);
+      }
+    });
+
     responseSub = Notifications.addNotificationResponseReceivedListener(() => {});
 
     return () => {
@@ -110,7 +119,12 @@ export function useNotifications() {
     };
   }, []);
 
-  return { permissionGranted };
+  // 注册前台通知处理器（供 useAlarmChecker 调用）
+  const registerForegroundHandler = (handler) => {
+    foregroundHandlerRef.current = handler;
+  };
+
+  return { permissionGranted, registerForegroundHandler };
 }
 
 export default useNotifications;

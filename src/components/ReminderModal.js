@@ -91,6 +91,7 @@ export default function ReminderModal({
   const eventStartTime = event.start_time || event.data?.startTime || '';
   const eventEndTime = event.end_time || event.data?.endTime || '';
   const eventPhase = event.phase || event.data?.phase || '';
+  const isWakeUp = eventPhase === '起床闹钟';
 
   return (
     <Modal
@@ -100,15 +101,22 @@ export default function ReminderModal({
       onRequestClose={handleClose}
     >
       <View style={[styles.overlay, { backgroundColor: theme.background }]}>
-        {/* 顶部状态栏提示 */}
-        <View style={[styles.topBar, { backgroundColor: theme.warning }]}>
-          <Image
-            source={require('../../assets/alarm-icon.png')}
-            style={styles.alarmIcon}
-            resizeMode="contain"
-          />
-          <Text style={styles.topBarText}>{t('reminder.taskStart')}</Text>
-        </View>
+        {/* 顶部状态栏提示 — 起床闹钟用不同样式 */}
+        {isWakeUp ? (
+          <View style={[styles.topBar, { backgroundColor: '#FF9A56' }]}>
+            <Text style={styles.wakeUpEmoji}>⏰</Text>
+            <Text style={styles.topBarText}>🌅 起床闹钟</Text>
+          </View>
+        ) : (
+          <View style={[styles.topBar, { backgroundColor: theme.warning }]}>
+            <Image
+              source={require('../../assets/alarm-icon.png')}
+              style={styles.alarmIcon}
+              resizeMode="contain"
+            />
+            <Text style={styles.topBarText}>{t('reminder.taskStart')}</Text>
+          </View>
+        )}
 
         {/* 语音播报状态栏 */}
         <View style={[styles.voiceBar, { backgroundColor: theme.surfaceSecondary }]}>
@@ -117,26 +125,25 @@ export default function ReminderModal({
               <>
                 <Text style={[styles.voiceIcon]}>🔊</Text>
                 <Text style={[styles.voiceText, { color: theme.primary }]}>
-                  正在语音播报任务内容...
+                  {isWakeUp ? '正在播报早安问候...' : '正在语音播报任务内容...'}
                 </Text>
               </>
             ) : voiceFinished ? (
               <>
                 <Text style={[styles.voiceIcon]}>✅</Text>
                 <Text style={[styles.voiceText, { color: theme.success }]}>
-                  语音播报完成，即将自动开始...
+                  {isWakeUp ? '早安播报完成' : '语音播报完成，即将自动开始...'}
                 </Text>
               </>
             ) : (
               <>
                 <Text style={[styles.voiceIcon]}>📋</Text>
                 <Text style={[styles.voiceText, { color: theme.textSecondary }]}>
-                  请在下方选择操作
+                  {isWakeUp ? '早上好！查看今日日程' : '请在下方选择操作'}
                 </Text>
               </>
             )}
           </View>
-          {/* 语音播报进度指示器 */}
           {voicePlaying && (
             <View style={[styles.voiceTrack, { backgroundColor: theme.border }]}>
               <View style={[styles.voiceTrackInner, { backgroundColor: theme.primary }]} />
@@ -178,67 +185,131 @@ export default function ReminderModal({
 
         {/* 底部操作按钮 */}
         <View style={[styles.actions, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
-          {/* 开始执行 */}
-          <TouchableOpacity
-            style={[styles.startButton, { backgroundColor: theme.success }]}
-            onPress={handleStart}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.startButtonText}>
-              ✅ {t('reminder.startTask')}
-            </Text>
-          </TouchableOpacity>
-
-          {/* 稍后提醒 + 跳过 */}
-          <View style={styles.secondaryActions}>
-            {/* 稍后提醒 */}
-            <TouchableOpacity
-              style={[styles.secondaryBtn, { borderColor: theme.border }]}
-              onPress={() => setSnoozeMenuOpen(!snoozeMenuOpen)}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.secondaryBtnText, { color: theme.textPrimary }]}>
-                ⏱ {t('reminder.snooze')}
-              </Text>
-            </TouchableOpacity>
-
-            {/* 跳过 */}
-            <TouchableOpacity
-              style={[styles.secondaryBtn, { borderColor: theme.border }]}
-              onPress={handleSkip}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.secondaryBtnText, { color: theme.textSecondary }]}>
-                ⏭ {t('reminder.skip')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* 稍后提醒选项菜单 */}
-          {snoozeMenuOpen && (
-            <View style={[styles.snoozeMenu, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-              {[5, 10, 15].map((minutes) => (
-                <TouchableOpacity
-                  key={minutes}
-                  style={[styles.snoozeOption, { borderBottomColor: theme.border }]}
-                  onPress={() => handleSnooze(minutes)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.snoozeOptionText, { color: theme.primary }]}>
-                    {t('reminder.snoozeMinutes', { minutes })}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+          {isWakeUp ? (
+            <>
+              {/* 起床闹钟：起床按钮 */}
               <TouchableOpacity
-                style={styles.snoozeOption}
-                onPress={() => setSnoozeMenuOpen(false)}
+                style={[styles.startButton, { backgroundColor: '#FF9A56' }]}
+                onPress={handleClose}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.snoozeOptionText, { color: theme.textSecondary }]}>
-                  {t('common.cancel')}
+                <Text style={styles.startButtonText}>
+                  🌅 起床啦！
                 </Text>
               </TouchableOpacity>
-            </View>
+
+              <View style={styles.secondaryActions}>
+                {/* 稍后再响 */}
+                <TouchableOpacity
+                  style={[styles.secondaryBtn, { borderColor: theme.border }]}
+                  onPress={() => setSnoozeMenuOpen(!snoozeMenuOpen)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.secondaryBtnText, { color: theme.textPrimary }]}>
+                    ⏱ 再睡一会
+                  </Text>
+                </TouchableOpacity>
+
+                {/* 关闭 */}
+                <TouchableOpacity
+                  style={[styles.secondaryBtn, { borderColor: theme.border }]}
+                  onPress={handleClose}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.secondaryBtnText, { color: theme.textSecondary }]}>
+                    ✕ 关闭
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* 稍后提醒选项菜单 — 起床闹钟使用更长的延迟 */}
+              {snoozeMenuOpen && (
+                <View style={[styles.snoozeMenu, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                  {[5, 10, 15, 20].map((minutes) => (
+                    <TouchableOpacity
+                      key={minutes}
+                      style={[styles.snoozeOption, { borderBottomColor: theme.border }]}
+                      onPress={() => handleSnooze(minutes)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.snoozeOptionText, { color: theme.primary }]}>
+                        {minutes} 分钟后
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                  <TouchableOpacity
+                    style={styles.snoozeOption}
+                    onPress={() => setSnoozeMenuOpen(false)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.snoozeOptionText, { color: theme.textSecondary }]}>
+                      {t('common.cancel')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </>
+          ) : (
+            <>
+              {/* 日程提醒：开始执行 */}
+              <TouchableOpacity
+                style={[styles.startButton, { backgroundColor: theme.success }]}
+                onPress={handleStart}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.startButtonText}>
+                  ✅ {t('reminder.startTask')}
+                </Text>
+              </TouchableOpacity>
+
+              <View style={styles.secondaryActions}>
+                <TouchableOpacity
+                  style={[styles.secondaryBtn, { borderColor: theme.border }]}
+                  onPress={() => setSnoozeMenuOpen(!snoozeMenuOpen)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.secondaryBtnText, { color: theme.textPrimary }]}>
+                    ⏱ {t('reminder.snooze')}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.secondaryBtn, { borderColor: theme.border }]}
+                  onPress={handleSkip}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.secondaryBtnText, { color: theme.textSecondary }]}>
+                    ⏭ {t('reminder.skip')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {snoozeMenuOpen && (
+                <View style={[styles.snoozeMenu, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                  {[5, 10, 15].map((minutes) => (
+                    <TouchableOpacity
+                      key={minutes}
+                      style={[styles.snoozeOption, { borderBottomColor: theme.border }]}
+                      onPress={() => handleSnooze(minutes)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={[styles.snoozeOptionText, { color: theme.primary }]}>
+                        {t('reminder.snoozeMinutes', { minutes })}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                  <TouchableOpacity
+                    style={styles.snoozeOption}
+                    onPress={() => setSnoozeMenuOpen(false)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={[styles.snoozeOptionText, { color: theme.textSecondary }]}>
+                      {t('common.cancel')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </>
           )}
         </View>
       </View>
@@ -262,6 +333,9 @@ const styles = StyleSheet.create({
   alarmIcon: {
     width: 28,
     height: 28,
+  },
+  wakeUpEmoji: {
+    fontSize: 26,
   },
   topBarText: {
     color: '#FFFFFF',

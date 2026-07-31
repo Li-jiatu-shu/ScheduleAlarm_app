@@ -22,6 +22,10 @@ import * as NotificationScheduler from '../modules/scheduler/NotificationSchedul
 import { useTheme } from '../hooks/useTheme';
 import { t } from '../i18n';
 import ConfirmDialog from '../components/ConfirmDialog';
+import { getToday, addDays, formatDate } from '../utils/helpers';
+
+// 预设阶段选项
+const PHASE_OPTIONS = ['基础阶段', '强化阶段', '冲刺阶段', '未分类'];
 
 export default function EditTaskScreen({ route, navigation }) {
   const theme = useTheme();
@@ -160,46 +164,74 @@ export default function EditTaskScreen({ route, navigation }) {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        {/* 阶段 */}
+        {/* 阶段 — 快速选择芯片 */}
         <View style={styles.field}>
           <Text style={[styles.label, { color: theme.textSecondary }]}>
             {t('edit.phase')}
           </Text>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: theme.surface,
-                color: theme.textPrimary,
-                borderColor: theme.border,
-              },
-            ]}
-            value={phase}
-            onChangeText={setPhase}
-            placeholder="如：基础阶段"
-            placeholderTextColor={theme.textTertiary}
-          />
+          <View style={styles.phaseChipRow}>
+            {PHASE_OPTIONS.map((p) => (
+              <TouchableOpacity
+                key={p}
+                style={[
+                  styles.phaseChip,
+                  {
+                    backgroundColor: phase === p ? theme.primary + '20' : theme.surface,
+                    borderColor: phase === p ? theme.primary : theme.border,
+                  },
+                ]}
+                onPress={() => setPhase(p)}
+              >
+                <Text style={[
+                  styles.phaseChipText,
+                  { color: phase === p ? theme.primary : theme.textSecondary },
+                ]}>
+                  {p}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
-        {/* 日期 */}
+        {/* 日期 — 带快速切换按钮 */}
         <View style={styles.field}>
           <Text style={[styles.label, { color: theme.textSecondary }]}>
             {t('edit.date')}
           </Text>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: theme.surface,
-                color: theme.textPrimary,
-                borderColor: theme.border,
-              },
-            ]}
-            value={date}
-            onChangeText={setDate}
-            placeholder="YYYY-MM-DD"
-            placeholderTextColor={theme.textTertiary}
-          />
+          <View style={styles.dateRow}>
+            <TouchableOpacity
+              style={[styles.dateQuickBtn, { backgroundColor: theme.surfaceSecondary }]}
+              onPress={() => setDate(formatDate(addDays(new Date(getToday()), -1)))}
+            >
+              <Text style={[styles.dateQuickBtnText, { color: theme.textSecondary }]}>昨天</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.dateQuickBtn, { backgroundColor: theme.primary + '20' }]}
+              onPress={() => setDate(getToday())}
+            >
+              <Text style={[styles.dateQuickBtnText, { color: theme.primary }]}>今天</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.dateQuickBtn, { backgroundColor: theme.surfaceSecondary }]}
+              onPress={() => setDate(formatDate(addDays(new Date(getToday()), 1)))}
+            >
+              <Text style={[styles.dateQuickBtnText, { color: theme.textSecondary }]}>明天</Text>
+            </TouchableOpacity>
+            <TextInput
+              style={[
+                styles.dateInput,
+                {
+                  backgroundColor: theme.surface,
+                  color: theme.textPrimary,
+                  borderColor: theme.border,
+                },
+              ]}
+              value={date}
+              onChangeText={setDate}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor={theme.textTertiary}
+            />
+          </View>
         </View>
 
         {/* 开始时间和结束时间 */}
@@ -405,5 +437,45 @@ const styles = StyleSheet.create({
   deleteText: {
     fontSize: 16,
     fontWeight: '500',
+  },
+  // 阶段芯片
+  phaseChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  phaseChip: {
+    borderRadius: 16,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  phaseChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  // 日期快捷
+  dateRow: {
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
+  },
+  dateQuickBtn: {
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  dateQuickBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  dateInput: {
+    flex: 1,
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 13,
+    minWidth: 90,
   },
 });

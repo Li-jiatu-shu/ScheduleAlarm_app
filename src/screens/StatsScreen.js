@@ -230,6 +230,96 @@ export default function StatsScreen() {
           </View>
         </View>
 
+        {/* 拖延分析 */}
+        <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          拖延分析
+        </Text>
+        <View style={[styles.heatmapCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          {(() => {
+            const today = getToday();
+            const todayEvents = schedule.events.filter((e) => e.date === today);
+            const total = todayEvents.length;
+            const completed = todayEvents.filter((e) => e.completed === 1).length;
+            const skipped = todayEvents.filter((e) => e.completed === 0 && !e.enabled !== false).length;
+
+            if (total === 0) {
+              return (
+                <Text style={[styles.delayEmpty, { color: theme.textTertiary }]}>
+                  今日暂无任务数据
+                </Text>
+              );
+            }
+
+            // 模拟延迟分析：检查已完成任务是否在规定时间内完成
+            const delayedTasks = todayEvents.filter((e) => {
+              if (e.completed !== 1 || !e.completed_at) return false;
+              const [h, m] = (e.end_time || e.start_time || '').split(':').map(Number);
+              if (isNaN(h) || isNaN(m)) return false;
+              const taskEnd = new Date(today);
+              taskEnd.setHours(h, m, 0, 0);
+              const completedAt = new Date(e.completed_at);
+              return completedAt > taskEnd;
+            });
+
+            const delayRate = total > 0 ? ((skipped + delayedTasks.length) / total * 100) : 0;
+
+            return (
+              <View>
+                {/* 拖延率指标 */}
+                <View style={styles.delayMainRow}>
+                  <View style={styles.delayScoreCircle}>
+                    <Text style={[styles.delayScoreNumber, {
+                      color: delayRate > 50 ? theme.danger : delayRate > 25 ? theme.warning : theme.success,
+                    }]}>
+                      {Math.round(delayRate)}%
+                    </Text>
+                    <Text style={[styles.delayScoreLabel, { color: theme.textTertiary }]}>
+                      拖延率
+                    </Text>
+                  </View>
+                  <View style={styles.delayStats}>
+                    <View style={styles.delayStatRow}>
+                      <Text style={styles.delayStatDot}>⏭</Text>
+                      <Text style={[styles.delayStatText, { color: theme.textSecondary }]}>
+                        跳过任务：{skipped} 个
+                      </Text>
+                    </View>
+                    <View style={styles.delayStatRow}>
+                      <Text style={styles.delayStatDot}>⏰</Text>
+                      <Text style={[styles.delayStatText, { color: theme.textSecondary }]}>
+                        延迟完成：{delayedTasks.length} 个
+                      </Text>
+                    </View>
+                    <View style={styles.delayStatRow}>
+                      <Text style={styles.delayStatDot}>✅</Text>
+                      <Text style={[styles.delayStatText, { color: theme.textSecondary }]}>
+                        按时完成：{completed - delayedTasks.length} 个
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* 趋势提示 */}
+                <View style={[styles.delayTip, {
+                  backgroundColor: delayRate > 50 ? theme.danger + '15' : delayRate > 25 ? theme.warning + '15' : theme.success + '15',
+                }]}>
+                  <Text style={[styles.delayTipText, {
+                    color: delayRate > 50 ? theme.danger : delayRate > 25 ? theme.warning : theme.success,
+                  }]}>
+                    {delayRate > 50
+                      ? '⚠ 今日拖延率较高，建议优先完成重要任务'
+                      : delayRate > 25
+                        ? '💪 还有改进空间，继续加油'
+                        : delayRate === 0
+                          ? '🎉 完美！所有任务按时完成'
+                          : '👍 表现不错，保持节奏'}
+                  </Text>
+                </View>
+              </View>
+            );
+          })()}
+        </View>
+
         {/* 阶段统计 */}
         {schedule.phases.length > 0 && (
           <>
@@ -427,5 +517,59 @@ const styles = StyleSheet.create({
   phaseRate: {
     fontSize: 15,
     fontWeight: '700',
+  },
+  // 拖延分析样式
+  delayEmpty: {
+    fontSize: 13,
+    textAlign: 'center',
+    paddingVertical: 20,
+  },
+  delayMainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+    marginBottom: 14,
+  },
+  delayScoreCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'transparent',
+    borderWidth: 3,
+    borderColor: '#E0E0E0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  delayScoreNumber: {
+    fontSize: 22,
+    fontWeight: '800',
+  },
+  delayScoreLabel: {
+    fontSize: 10,
+    marginTop: -2,
+  },
+  delayStats: {
+    flex: 1,
+    gap: 6,
+  },
+  delayStatRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  delayStatDot: {
+    fontSize: 14,
+  },
+  delayStatText: {
+    fontSize: 13,
+  },
+  delayTip: {
+    borderRadius: 10,
+    padding: 12,
+  },
+  delayTipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 20,
   },
 });

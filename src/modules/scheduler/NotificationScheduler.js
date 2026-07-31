@@ -239,25 +239,28 @@ export async function getScheduledCount() {
 }
 
 /**
- * 补偿检查：检查当前时间前后5分钟内是否有未触发的任务
+ * 补偿检查：检查当前时间前后30分钟内是否有未触发的任务
+ * v1.2.1: 窗口从±5分钟扩展至±30分钟，覆盖报警可见期间的遗漏事件
  * @param {Object[]} events - 今日事件列表
  * @returns {Object[]} 需要补偿触发的事件
  */
 export function findMissedEvents(events) {
   const now = new Date();
-  const currentTimeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-  const fiveMinAgo = new Date(now.getTime() - 5 * 60 * 1000);
-  const fiveMinLater = new Date(now.getTime() + 5 * 60 * 1000);
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const thirtyMinAgo = new Date(now.getTime() - 30 * 60 * 1000);
+  const thirtyMinLater = new Date(now.getTime() + 30 * 60 * 1000);
 
   return events.filter((event) => {
-    // 只检查未完成的事件
+    // 只检查今日未完成的事件
     if (event.completed === 1) return false;
+    if (event.date !== today) return false;
 
-    const [h, m] = event.start_time.split(':').map(Number);
+    const [h, m] = (event.start_time || '').split(':').map(Number);
+    if (isNaN(h) || isNaN(m)) return false;
     const eventTime = new Date(event.date);
     eventTime.setHours(h, m, 0, 0);
 
-    return eventTime >= fiveMinAgo && eventTime <= fiveMinLater;
+    return eventTime >= thirtyMinAgo && eventTime <= thirtyMinLater;
   });
 }
 

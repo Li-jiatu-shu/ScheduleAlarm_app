@@ -9,6 +9,9 @@ const KEYS = {
   SETTINGS: '@schedule_settings',
   LOGS: '@schedule_logs',
   TEMPLATES: '@schedule_templates',
+  COUNTDOWNS: '@schedule_countdowns',
+  SCHEDULE_SETS: '@schedule_sets',
+  ACTIVE_SCHEDULE_SET: '@active_schedule_set',
 };
 
 let initialized = false;
@@ -53,6 +56,8 @@ export async function initDatabase() {
   if (!logs) await AsyncStorage.setItem(KEYS.LOGS, JSON.stringify([]));
   const templates = await AsyncStorage.getItem(KEYS.TEMPLATES);
   if (!templates) await AsyncStorage.setItem(KEYS.TEMPLATES, JSON.stringify([]));
+  const countdowns = await AsyncStorage.getItem(KEYS.COUNTDOWNS);
+  if (!countdowns) await AsyncStorage.setItem(KEYS.COUNTDOWNS, JSON.stringify([]));
   initialized = true;
 }
 
@@ -257,6 +262,7 @@ export async function clearAllData() {
   await writeEvents([]);
   await AsyncStorage.setItem(KEYS.LOGS, JSON.stringify([]));
   await writeTemplates([]);
+  await writeCountdowns([]);
 }
 
 // ---- 日程模板管理（一次导入，每日自动生成） ----
@@ -383,6 +389,123 @@ export async function clearTemplates() {
   await writeTemplates([]);
 }
 
+// ---- 倒计时管理 ----
+
+async function readCountdowns() {
+  const raw = await AsyncStorage.getItem(KEYS.COUNTDOWNS);
+  if (!raw) return [];
+  return JSON.parse(raw);
+}
+
+async function writeCountdowns(countdowns) {
+  await AsyncStorage.setItem(KEYS.COUNTDOWNS, JSON.stringify(countdowns));
+}
+
+export async function getCountdowns() {
+  return await readCountdowns();
+}
+
+export async function addCountdown(countdown) {
+  const list = await readCountdowns();
+  const newItem = {
+    id: countdown.id || `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    title: countdown.title || '',
+    targetDate: countdown.targetDate || '',
+    type: countdown.type || 'other',
+    color: countdown.color || '#FF7B9C',
+    emoji: countdown.emoji || '📅',
+    notifyDays: countdown.notifyDays || [],
+    enabled: countdown.enabled !== false ? 1 : 0,
+    createdAt: countdown.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  list.push(newItem);
+  await writeCountdowns(list);
+  return newItem;
+}
+
+export async function updateCountdown(id, updates) {
+  const list = await readCountdowns();
+  const index = list.findIndex((c) => c.id === id);
+  if (index === -1) return null;
+  list[index] = { ...list[index], ...updates, updatedAt: new Date().toISOString() };
+  await writeCountdowns(list);
+  return list[index];
+}
+
+export async function deleteCountdown(id) {
+  const list = await readCountdowns();
+  await writeCountdowns(list.filter((c) => c.id !== id));
+}
+
+// ---- 日程方案管理（多套日程切换） ----
+
+async function readScheduleSets() {
+  const raw = await AsyncStorage.getItem(KEYS.SCHEDULE_SETS);
+  if (!raw) return {};
+  return JSON.parse(raw);
+}
+
+async function writeScheduleSets(sets) {
+  await AsyncStorage.setItem(KEYS.SCHEDULE_SETS, JSON.stringify(sets));
+}
+
+/**
+ * 获取所有日程方案
+ * @returns {Promise<Object>} { setName: { name, events, templates, createdAt } }
+ */
+export async function getScheduleSets() {
+  return await readScheduleSets();
+}
+
+/**
+ * 保存当前日程为命名方案
+ * @param {string} name - 方案名称
+ */
+export async function saveCurrentAsScheduleSet(name) {
+  const sets = await readScheduleSets();
+  const events = await readEvents();
+  const templates = await readTemplates();
+  sets[name] = {
+    name,
+    events,
+    templates,
+    savedAt: new Date().toISOString(),
+  };
+  await writeScheduleSets(sets);
+}
+
+/**
+ * 加载指定日程方案（替换当前所有事件和模板）
+ * @param {string} name - 方案名称
+ */
+export async function loadScheduleSet(name) {
+  const sets = await readScheduleSets();
+  const set = sets[name];
+  if (!set) throw new Error(`方案 "${name}" 不存在`);
+  await writeEvents(set.events || []);
+  await writeTemplates(set.templates || []);
+  await AsyncStorage.setItem(KEYS.ACTIVE_SCHEDULE_SET, name);
+}
+
+/**
+ * 删除指定日程方案
+ * @param {string} name - 方案名称
+ */
+export async function deleteScheduleSet(name) {
+  const sets = await readScheduleSets();
+  delete sets[name];
+  await writeScheduleSets(sets);
+}
+
+/**
+ * 获取当前活跃的日程方案名称
+ * @returns {Promise<string|null>}
+ */
+export async function getActiveScheduleSet() {
+  return await AsyncStorage.getItem(KEYS.ACTIVE_SCHEDULE_SET) || null;
+}
+
 export async function closeDatabase() {
   initialized = false;
 }
@@ -394,4 +517,6 @@ export default {
   getAllSettings, addLog, getRecentLogs, getEventLogs,
   getCompletionStats, getDailyStats, clearAllData, clearTemplates, closeDatabase,
   saveScheduleTemplates, getScheduleTemplates, generateEventsFromTemplates, ensureFutureEvents,
+  getCountdowns, addCountdown, updateCountdown, deleteCountdown,
+  getScheduleSets, saveCurrentAsScheduleSet, loadScheduleSet, deleteScheduleSet, getActiveScheduleSet,
 };

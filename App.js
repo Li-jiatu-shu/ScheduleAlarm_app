@@ -1,7 +1,7 @@
 /**
  * 小舒日程闹钟 - 应用根组件
  */
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet } from 'react-native';
@@ -15,9 +15,10 @@ import { useAlarmChecker } from './src/hooks/useAlarmChecker';
 import ReminderModal from './src/components/ReminderModal';
 import { addLog } from './src/modules/storage/Database';
 import * as NotificationScheduler from './src/modules/scheduler/NotificationScheduler';
+import { getToday } from './src/utils/helpers';
 
 function AppContent() {
-  useNotifications();
+  const { permissionGranted, registerForegroundHandler } = useNotifications();
   const schedule = useSchedule();
   const {
     alarmEvent,
@@ -26,7 +27,36 @@ function AppContent() {
     voiceFinished,
     dismiss,
     markInteracted,
+    triggerAlarm,
+    queueLength,
   } = useAlarmChecker();
+
+  // 将 useAlarmChecker 的 triggerAlarm 注册为前台通知处理器
+  const eventMapRef = useRef({});
+  useEffect(() => {
+    const map = {};
+    for (const e of schedule.events) map[e.id] = e;
+    eventMapRef.current = map;
+  }, [schedule.events]);
+
+  useEffect(() => {
+    registerForegroundHandler((data) => {
+      const event = eventMapRef.current[data.eventId];
+      if (event) {
+        triggerAlarm(event);
+      } else if (data.title) {
+        triggerAlarm({
+          id: data.eventId,
+          title: data.title,
+          content: data.content || '',
+          phase: data.phase || '',
+          start_time: data.startTime || '',
+          end_time: data.endTime || '',
+          date: getToday(),
+        });
+      }
+    });
+  }, [registerForegroundHandler, triggerAlarm]);
 
   const onAlarmAction = async (action, event) => {
     markInteracted();

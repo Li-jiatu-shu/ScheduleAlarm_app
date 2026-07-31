@@ -42,6 +42,60 @@ export default function ImportScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
+  const [editingIndex, setEditingIndex] = useState(-1); // 正在编辑的条目索引
+  const [editData, setEditData] = useState(null);       // 编辑中的临时数据
+
+  const startEditing = (index) => {
+    const item = parsedEvents[index];
+    setEditingIndex(index);
+    setEditData({
+      phase: item.phase,
+      date: item.date,
+      startTime: item.start_time || item.startTime,
+      endTime: item.end_time || item.endTime,
+      title: item.title,
+      content: item.content || '',
+    });
+  };
+
+  const saveEdit = () => {
+    if (!editData || editingIndex < 0) return;
+    const updated = [...parsedEvents];
+    updated[editingIndex] = {
+      ...updated[editingIndex],
+      phase: editData.phase,
+      date: editData.date,
+      start_time: editData.startTime,
+      end_time: editData.endTime,
+      title: editData.title,
+      content: editData.content,
+    };
+    setParsedEvents(updated);
+    setEditingIndex(-1);
+    setEditData(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingIndex(-1);
+    setEditData(null);
+  };
+
+  const deleteParsedItem = (index) => {
+    Alert.alert('删除确认', `确定要删除"${parsedEvents[index].title}"吗？`, [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: () => {
+          const updated = parsedEvents.filter((_, i) => i !== index);
+          setParsedEvents(updated);
+          if (updated.length === 0) {
+            setMode('select');
+          }
+        },
+      },
+    ]);
+  };
 
   // 文件选择
   const handlePickFile = useCallback(async () => {
@@ -180,45 +234,133 @@ export default function ImportScreen({ navigation }) {
   }, [parsedEvents, schedule, settings, navigation]);
 
   // 渲染解析预览项
-  const renderPreviewItem = ({ item, index }) => (
-    <View
-      style={[
-        styles.previewItem,
-        { backgroundColor: theme.surface, borderColor: theme.border },
-      ]}
-    >
-      <View style={styles.previewHeader}>
-        <Text style={[styles.previewPhase, { color: theme.primary }]}>
-          {item.phase}
-        </Text>
-        <Text style={[styles.previewIndex, { color: theme.textTertiary }]}>
-          #{index + 1}
-        </Text>
-      </View>
-      <Text style={[styles.previewTitle, { color: theme.textPrimary }]}>
-        {item.title}
-      </Text>
-      <View style={styles.previewMeta}>
-        <Text style={[styles.previewTime, { color: theme.textSecondary }]}>
-          {item.date} {item.startTime}
-          {item.endTime ? ` - ${item.endTime}` : ''}
-        </Text>
-        {item.repeat && (
-          <Text style={[styles.repeatBadge, { color: theme.info }]}>
-            每日重复
-          </Text>
+  const renderPreviewItem = ({ item, index }) => {
+    const isEditing = editingIndex === index;
+    const data = isEditing ? editData : null;
+
+    return (
+      <TouchableOpacity
+        style={[
+          styles.previewItem,
+          { backgroundColor: theme.surface, borderColor: isEditing ? theme.primary : theme.border },
+        ]}
+        onPress={() => !isEditing && startEditing(index)}
+        activeOpacity={0.7}
+      >
+        {isEditing ? (
+          // ---- 编辑模式 ----
+          <View style={styles.editForm}>
+            <View style={styles.editRow}>
+              <TextInput
+                style={[styles.editInput, { backgroundColor: theme.surfaceSecondary, color: theme.textPrimary, borderColor: theme.border }]}
+                placeholder="日期 YYYY-MM-DD"
+                placeholderTextColor={theme.textTertiary}
+                value={data.date}
+                onChangeText={(v) => setEditData({ ...data, date: v })}
+              />
+              <TextInput
+                style={[styles.editInputSmall, { backgroundColor: theme.surfaceSecondary, color: theme.textPrimary, borderColor: theme.border }]}
+                placeholder="开始"
+                placeholderTextColor={theme.textTertiary}
+                value={data.startTime}
+                onChangeText={(v) => setEditData({ ...data, startTime: v })}
+              />
+              <TextInput
+                style={[styles.editInputSmall, { backgroundColor: theme.surfaceSecondary, color: theme.textPrimary, borderColor: theme.border }]}
+                placeholder="结束"
+                placeholderTextColor={theme.textTertiary}
+                value={data.endTime}
+                onChangeText={(v) => setEditData({ ...data, endTime: v })}
+              />
+            </View>
+            <TextInput
+              style={[styles.editInputHalf, { backgroundColor: theme.surfaceSecondary, color: theme.textPrimary, borderColor: theme.border }]}
+              placeholder="阶段"
+              placeholderTextColor={theme.textTertiary}
+              value={data.phase}
+              onChangeText={(v) => setEditData({ ...data, phase: v })}
+            />
+            <TextInput
+              style={[styles.editInput, { backgroundColor: theme.surfaceSecondary, color: theme.textPrimary, borderColor: theme.border }]}
+              placeholder="任务标题"
+              placeholderTextColor={theme.textTertiary}
+              value={data.title}
+              onChangeText={(v) => setEditData({ ...data, title: v })}
+            />
+            <TextInput
+              style={[styles.editInputMultiline, { backgroundColor: theme.surfaceSecondary, color: theme.textPrimary, borderColor: theme.border }]}
+              placeholder="具体内容（可选）"
+              placeholderTextColor={theme.textTertiary}
+              value={data.content}
+              onChangeText={(v) => setEditData({ ...data, content: v })}
+              multiline
+              numberOfLines={3}
+              textAlignVertical="top"
+            />
+            <View style={styles.editActions}>
+              <TouchableOpacity
+                style={[styles.editBtn, { backgroundColor: theme.danger + '20' }]}
+                onPress={() => deleteParsedItem(index)}
+              >
+                <Text style={[styles.editBtnText, { color: theme.danger }]}>删除</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.editBtn, { backgroundColor: theme.surfaceSecondary }]}
+                onPress={cancelEdit}
+              >
+                <Text style={[styles.editBtnText, { color: theme.textSecondary }]}>取消</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.editBtn, { backgroundColor: theme.primary }]}
+                onPress={saveEdit}
+              >
+                <Text style={[styles.editBtnText, { color: '#FFF' }]}>保存</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : (
+          // ---- 预览模式 ----
+          <>
+            <View style={styles.previewHeader}>
+              <Text style={[styles.previewPhase, { color: theme.primary }]}>
+                {item.phase}
+              </Text>
+              <View style={styles.previewHeaderRight}>
+                <Text style={[styles.editHint, { color: theme.textTertiary }]}>
+                  点击编辑
+                </Text>
+                <Text style={[styles.previewIndex, { color: theme.textTertiary }]}>
+                  #{index + 1}
+                </Text>
+              </View>
+            </View>
+            <Text style={[styles.previewTitle, { color: theme.textPrimary }]}>
+              {item.title}
+            </Text>
+            <View style={styles.previewMeta}>
+              <Text style={[styles.previewTime, { color: theme.textSecondary }]}>
+                {item.date} {item.start_time || item.startTime}
+                {(item.end_time || item.endTime) ? ` - ${item.end_time || item.endTime}` : ''}
+              </Text>
+              {item.repeat && (
+                <Text style={[styles.repeatBadge, { color: theme.info }]}>
+                  每日重复
+                </Text>
+              )}
+            </View>
+            {item.content ? (
+              <Text
+                style={[styles.previewContent, { color: theme.textSecondary }]}
+                numberOfLines={2}
+              >
+                {item.content}
+              </Text>
+            ) : null}
+          </>
         )}
-      </View>
-      {item.content ? (
-        <Text
-          style={[styles.previewContent, { color: theme.textSecondary }]}
-          numberOfLines={2}
-        >
-          {item.content}
-        </Text>
-      ) : null}
-    </View>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
@@ -571,5 +713,63 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  // 编辑模式样式
+  editForm: { gap: 8 },
+  editRow: { flexDirection: 'row', gap: 8 },
+  editInput: {
+    flex: 1,
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 13,
+  },
+  editInputSmall: {
+    width: 70,
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    fontSize: 12,
+  },
+  editInputHalf: {
+    width: '50%',
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 13,
+  },
+  editInputMultiline: {
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 13,
+    minHeight: 60,
+  },
+  editActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+    marginTop: 4,
+  },
+  editBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  editBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  editHint: {
+    fontSize: 10,
+    marginRight: 8,
+  },
+  previewHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

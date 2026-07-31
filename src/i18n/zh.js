@@ -74,6 +74,7 @@ export default {
     reminder: '提醒设置',
     sound: '声音设置',
     display: '显示设置',
+    wakeUp: '起床闹钟',
     about: '关于',
 
     // 提醒设置
@@ -104,8 +105,20 @@ export default {
     ringtone: '铃声选择',
     ringtoneSystem: '系统默认',
     ringtoneCustom: '自定义铃声',
+    ringtoneAlarm: '短促闹铃',
+    ringtoneAlarmDesc: 'alarm-sound.wav — 适合日程提醒',
+    ringtoneClock: '长音频铃声',
+    ringtoneClockDesc: 'clock-sound.wav — 适合起床闹钟',
     forceVolume: '强制音量',
     forceVolumeDesc: '静音/振动模式下仍播放铃声',
+
+    // 起床闹钟
+    wakeUpEnabled: '启用起床闹钟',
+    wakeUpEnabledDesc: '每天定时响铃并播报当日日程',
+    wakeUpTime: '起床时间',
+    wakeUpSound: '起床铃声',
+    wakeUpVolume: '起床铃声音量',
+    wakeUpTest: '测试起床铃声',
 
     // 显示设置
     theme: '主题模式',
@@ -168,6 +181,44 @@ export default {
     pending: '待完成',
     skipped: '已跳过',
     delayed: '已推迟',
+  },
+
+  countdown: {
+    title: '倒计时',
+    add: '添加倒计时',
+    edit: '编辑倒计时',
+    daysRemaining: '还剩 {days} 天',
+    daysRemainingShort: '{days}天',
+    today: '就是今天！',
+    passed: '已过 {days} 天',
+    noCountdowns: '还没有倒计时',
+    noCountdownsHint: '添加考试、报名等重要日期',
+    targetDate: '目标日期',
+    countdownTitle: '倒计时名称',
+    type: '类型',
+    color: '颜色',
+    emoji: '图标',
+    notifyDays: '提前提醒',
+    types: {
+      exam: '考试',
+      registration: '报名',
+      deadline: '截止',
+      meeting: '会议',
+      travel: '出行',
+      birthday: '生日',
+      holiday: '节日',
+      other: '其他',
+    },
+    deleteConfirm: '确定要删除这个倒计时吗？',
+    saveSuccess: '倒计时已保存',
+    deleteSuccess: '倒计时已删除',
+    dayOptions: {
+      d1: '1天前',
+      d3: '3天前',
+      d7: '7天前',
+      d14: '14天前',
+      d30: '30天前',
+    },
   },
 
   common: {
