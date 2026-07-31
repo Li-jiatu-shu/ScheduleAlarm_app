@@ -611,7 +611,7 @@ export default function SettingsScreen() {
         <View style={[styles.section, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <View style={[styles.row, { borderBottomColor: theme.border }]}>
             <Text style={[styles.rowLabel, { color: theme.textPrimary }]}>版本</Text>
-            <Text style={[styles.rowValue, { color: theme.textSecondary }]}>1.2.1</Text>
+            <Text style={[styles.rowValue, { color: theme.textSecondary }]}>1.3.0</Text>
           </View>
           <TouchableOpacity
             style={[styles.row, { borderBottomColor: theme.border }]}

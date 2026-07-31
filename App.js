@@ -16,8 +16,12 @@ import ReminderModal from './src/components/ReminderModal';
 import { addLog } from './src/modules/storage/Database';
 import * as NotificationScheduler from './src/modules/scheduler/NotificationScheduler';
 import { getToday } from './src/utils/helpers';
+import { initLocale } from './src/i18n';
 
 function AppContent() {
+  // 初始化语言设置
+  useEffect(() => { initLocale(); }, []);
+
   const { permissionGranted, registerForegroundHandler } = useNotifications();
   const schedule = useSchedule();
   const {

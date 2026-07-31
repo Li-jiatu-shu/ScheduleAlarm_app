@@ -6,7 +6,7 @@
  * - 绕过勿扰模式
  * - 锁屏界面显示
  * - 振动反馈
- * - v1.2.1: 前台通知接收回调（桥接到 useAlarmChecker）
+ * - v1.3.0: 前台通知接收回调（桥接到 useAlarmChecker）
  */
 import { useState, useEffect, useRef } from 'react';
 import { Platform } from 'react-native';

@@ -4,6 +4,70 @@ All notable changes to 小舒日程闹钟 will be documented in this file.
 
 ---
 
+## [1.3.0] — 2026-07-31
+
+### ✨ Added
+- **倒计时天数提醒**：手动设置目标日期+意义标签，首页紧凑卡片显示剩余天数，红色(<3d)/橙色(<7d)/蓝色(<30d)/绿色(≥30d) 颜色编码
+  - `CountdownCard` — 倒计时卡片组件（紧凑/完整双模式）
+  - `CountdownEditor` — 编辑弹窗（日期输入、类型/颜色/图标选择、提醒天数）
+  - `CountdownManagerScreen` — 管理页面（增删改查）
+- **番茄钟计时器** (`PomodoroTimer`)：25分钟工作/5分钟休息，4轮后15分钟长休息。首页浮动🍅按钮唤起
+- **起床闹钟**：使用 `clock-sound.wav` 长音频，每日定时响铃+TTS播报当日日程摘要，橙色专属弹窗UI（"起床啦"/"再睡一会"）
+- **双铃声系统**：`playAlarm()` 支持 `soundType: 'alarm'|'clock'` 参数，日程提醒和起床闹钟可独立配置铃声
+- **数据导出**：SettingsScreen 导出全部日程为可读文本，通过系统分享面板发送
+- **多日程方案切换**：Database 新增 `SCHEDULE_SETS` 存储，支持保存/加载/删除命名方案
+- **导入预览手动编辑**：ImportScreen 预览列表中每条解析结果可点击进入内联编辑，支持修改日期/时间/阶段/标题/内容，支持删除单条
+- **拖延分析报表**：StatsScreen 新增"拖延分析"板块，计算今日拖延率，展示跳过/延迟/按时完成三项指标+智能建议
+- **英文多语言** (`src/i18n/en.js`)：完整英文翻译，设置页语言切换
+
+### 🔧 Fixed
+- **前台报警队列机制** (v1.2.1 → 并入射出)：修复单报警阻塞后续扫描的重大Bug
+- 补偿检查窗口从 ±5 → ±30 分钟
+- 前台系统通知现在正确触发 ReminderModal
+
+### 🔄 Changed
+- `useAlarmChecker.js` — 重写为报警队列+起床闹钟双模式
+- `Notifier.js` — `playAlarm()` 支持双音频文件选择
+- `HomeScreen.js` — 新增倒计时展示区+番茄钟浮动按钮
+- `StatsScreen.js` — 新增拖延分析报表板块
+- `EditTaskScreen.js` — 阶段芯片选择+日期快捷按钮
+- `ImportScreen.js` — 解析预览支持内联编辑
+- `SettingsScreen.js` — 新增铃声选择/起床闹钟/方案管理/语言切换
+- `ReminderModal.js` — 起床闹钟专属橙色UI
+- `AppNavigator.js` — 新增 CountdownManager 路由
+- `Database.js` — 新增倒计时CRUD+日程方案管理
+- `i18n/index.js` — 支持 en/zh 动态切换
+
+### 📝 Files Changed
+| 文件 | 操作 |
+|------|------|
+| `App.js` | 修改 |
+| `app.json` | 版本号 |
+| `package.json` | 版本号 |
+| `src/hooks/useAlarmChecker.js` | 重写 |
+| `src/hooks/useNotifications.js` | 修改 |
+| `src/modules/notifier/Notifier.js` | 修改 |
+| `src/modules/scheduler/NotificationScheduler.js` | 修改 |
+| `src/modules/storage/Database.js` | 修改 |
+| `src/screens/HomeScreen.js` | 修改 |
+| `src/screens/ImportScreen.js` | 修改 |
+| `src/screens/SettingsScreen.js` | 修改 |
+| `src/screens/StatsScreen.js` | 修改 |
+| `src/screens/EditTaskScreen.js` | 修改 |
+| `src/navigation/AppNavigator.js` | 修改 |
+| `src/components/ReminderModal.js` | 修改 |
+| `src/components/CountdownCard.js` | **新增** |
+| `src/components/CountdownEditor.js` | **新增** |
+| `src/components/PomodoroTimer.js` | **新增** |
+| `src/screens/CountdownManagerScreen.js` | **新增** |
+| `src/i18n/en.js` | **新增** |
+| `src/i18n/index.js` | 修改 |
+| `src/i18n/zh.js` | 修改 |
+| `src/utils/constants.js` | 修改 |
+| `assets/clock-sound.wav` | **新增** |
+
+---
+
 ## [1.2.1] — 2026-07-31
 
 ### 🔧 Fixed

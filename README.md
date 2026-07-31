@@ -2,7 +2,7 @@
 
 > 一款专为考研/备考人群设计的智能日程提醒App，支持一键导入日程文件，自动解析并生成每日定时提醒。
 
-[![Version](https://img.shields.io/badge/version-1.2.0-pink)](package.json)
+[![Version](https://img.shields.io/badge/version-1.3.0-pink)](package.json)
 [![Expo](https://img.shields.io/badge/Expo-SDK%2057-blue)](https://expo.dev)
 [![React Native](https://img.shields.io/badge/React%20Native-0.86-61dafb)](https://reactnative.dev)
 

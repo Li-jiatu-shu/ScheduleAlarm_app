@@ -240,7 +240,7 @@ export async function getScheduledCount() {
 
 /**
  * 补偿检查：检查当前时间前后30分钟内是否有未触发的任务
- * v1.2.1: 窗口从±5分钟扩展至±30分钟，覆盖报警可见期间的遗漏事件
+ * v1.3.0: 窗口从±5分钟扩展至±30分钟，覆盖报警可见期间的遗漏事件
  * @param {Object[]} events - 今日事件列表
  * @returns {Object[]} 需要补偿触发的事件
  */
