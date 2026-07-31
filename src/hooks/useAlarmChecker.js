@@ -40,6 +40,8 @@ export function useAlarmChecker() {
   const alarmQueueRef = useRef([]);         // 待触发的报警队列
   const isDismissingRef = useRef(false);    // 是否正在关闭（防止重复触发队列）
   const alarmsInFlightRef = useRef(new Set()); // 正在处理中的报警事件ID
+  const queueTimerRef = useRef(null);       // 队列处理定时器
+  const dismissTimerRef = useRef(null);     // 关闭缓冲定时器
 
   // 维护 eventId → event 的快速索引
   useEffect(() => {
@@ -197,7 +199,10 @@ export function useAlarmChecker() {
     if (queue.length === 0) return;
 
     const nextEvent = queue.shift();
-    setTimeout(() => {
+    // 清理旧定时器
+    if (queueTimerRef.current) clearTimeout(queueTimerRef.current);
+    queueTimerRef.current = setTimeout(() => {
+      queueTimerRef.current = null;
       triggerAlarm(nextEvent);
     }, QUEUE_NEXT_DELAY);
   }, [triggerAlarm]);
@@ -366,7 +371,9 @@ export function useAlarmChecker() {
     setAlarmEvent(null);
 
     // 短暂延迟后处理队列中的下一个报警
-    setTimeout(() => {
+    if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
+    dismissTimerRef.current = setTimeout(() => {
+      dismissTimerRef.current = null;
       isDismissingRef.current = false;
       processNextInQueue();
     }, QUEUE_NEXT_DELAY);
@@ -376,6 +383,15 @@ export function useAlarmChecker() {
   const markInteracted = useCallback(() => {
     hasInteractedRef.current = true;
   }, []);
+
+  // 组件卸载时清理所有定时器
+  useEffect(() => {
+    return () => {
+      if (queueTimerRef.current) clearTimeout(queueTimerRef.current);
+      if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
+      stopAlarm();
+    };
+  }, [stopAlarm]);
 
   // 暴露当前队列长度（供调试/UI显示）
   const queueLength = alarmQueueRef.current.length;

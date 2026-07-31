@@ -113,6 +113,19 @@ let _alarmStopped = false;
  */
 export async function playAlarm(options = {}) {
   const { volume = 0.8, soundType = 'alarm', loop = true } = options;
+
+  // 清理之前可能残留的闹铃状态（防止孤儿定时器）
+  _alarmStopped = true;
+  if (_alarmPlayer) {
+    try { _alarmPlayer.stop(); } catch (e) { /* ignore */ }
+    _alarmPlayer = null;
+  }
+  if (_vibrateInterval) {
+    clearInterval(_vibrateInterval);
+    _vibrateInterval = null;
+  }
+  Vibration.cancel();
+
   _alarmStopped = false;
 
   // 振动提醒（持续循环直至停止）

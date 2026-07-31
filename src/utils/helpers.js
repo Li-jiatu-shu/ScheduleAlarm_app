@@ -238,3 +238,30 @@ export function safeJsonParse(jsonStr, fallback = null) {
     return fallback;
   }
 }
+
+/**
+ * 解析事件时间字符串为 { hours, minutes, totalMinutes }
+ * 用于减少重复的 split(':').map(Number) 模式
+ * @param {string} timeStr - HH:mm 格式
+ * @returns {{ hours: number, minutes: number, totalMinutes: number }|null}
+ */
+export function parseEventTime(timeStr) {
+  if (!timeStr) return null;
+  const [h, m] = timeStr.split(':').map(Number);
+  if (isNaN(h) || isNaN(m)) return null;
+  return { hours: h, minutes: m, totalMinutes: h * 60 + m };
+}
+
+/**
+ * 根据阶段名称获取主题色
+ * @param {string} phase - 阶段名称
+ * @param {Object} theme - 主题对象
+ * @returns {{ bg: string, text: string }}
+ */
+export function getPhaseColor(phase, theme) {
+  if (!phase) return { bg: theme.phaseBase, text: theme.phaseBaseText };
+  if (phase.includes('基础')) return { bg: theme.phaseBase, text: theme.phaseBaseText };
+  if (phase.includes('强化')) return { bg: theme.phaseIntensive, text: theme.phaseIntensiveText };
+  if (phase.includes('冲刺')) return { bg: theme.phaseSprint, text: theme.phaseSprintText };
+  return { bg: theme.phaseBase, text: theme.phaseBaseText };
+}

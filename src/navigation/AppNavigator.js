@@ -135,7 +135,7 @@ function MainTabs() {
 // Tab 图标（使用 Emoji 代替图标库）
 function TabIcon({ icon }) {
   return (
-    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+    <View style={{ alignItems: 'center', justifyContent: 'center' }} accessible accessibilityRole="image" accessibilityLabel={icon}>
       <Text style={{ fontSize: 22 }}>{icon}</Text>
     </View>
   );
