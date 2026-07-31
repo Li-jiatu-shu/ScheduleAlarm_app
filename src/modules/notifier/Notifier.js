@@ -71,7 +71,10 @@ export async function stopSpeech() {
 }
 
 export async function isSpeaking() {
-  try { return await Speech.isSpeakingAsync(); } catch (e) { return false; }
+  try { return await Speech.isSpeakingAsync(); } catch (e) {
+    console.warn('isSpeaking 检查失败:', e);
+    return false;
+  }
 }
 
 export async function testSpeech(options = {}) {

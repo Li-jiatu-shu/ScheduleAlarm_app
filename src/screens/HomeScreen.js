@@ -36,7 +36,7 @@ export default function HomeScreen({ navigation }) {
   // 页面聚焦时加载倒计时
   useFocusEffect(
     useCallback(() => {
-      Database.getCountdowns().then(setCountdowns).catch(() => {});
+      Database.getCountdowns().then(setCountdowns).catch((e) => console.warn('加载倒计时失败:', e));
     }, [])
   );
 

@@ -105,7 +105,7 @@ export default function ReminderModal({
         {isWakeUp ? (
           <View style={[styles.topBar, { backgroundColor: '#FF9A56' }]}>
             <Text style={styles.wakeUpEmoji}>⏰</Text>
-            <Text style={styles.topBarText}>🌅 起床闹钟</Text>
+            <Text style={styles.topBarText}>{t('wakeUp.ringing')}</Text>
           </View>
         ) : (
           <View style={[styles.topBar, { backgroundColor: theme.warning }]}>
@@ -125,14 +125,14 @@ export default function ReminderModal({
               <>
                 <Text style={[styles.voiceIcon]}>🔊</Text>
                 <Text style={[styles.voiceText, { color: theme.primary }]}>
-                  {isWakeUp ? '正在播报早安问候...' : '正在语音播报任务内容...'}
+                  {isWakeUp ? t('wakeUp.voicePlaying') : '正在语音播报任务内容...'}
                 </Text>
               </>
             ) : voiceFinished ? (
               <>
                 <Text style={[styles.voiceIcon]}>✅</Text>
                 <Text style={[styles.voiceText, { color: theme.success }]}>
-                  {isWakeUp ? '早安播报完成' : '语音播报完成，即将自动开始...'}
+                  {isWakeUp ? t('wakeUp.voiceDone') : '语音播报完成，即将自动开始...'}
                 </Text>
               </>
             ) : (
@@ -194,7 +194,7 @@ export default function ReminderModal({
                 activeOpacity={0.7}
               >
                 <Text style={styles.startButtonText}>
-                  🌅 起床啦！
+                  {t('wakeUp.wakeUpNow')}
                 </Text>
               </TouchableOpacity>
 
@@ -206,7 +206,7 @@ export default function ReminderModal({
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.secondaryBtnText, { color: theme.textPrimary }]}>
-                    ⏱ 再睡一会
+                    ⏱ {t('wakeUp.snoozeMore')}
                   </Text>
                 </TouchableOpacity>
 
@@ -217,7 +217,7 @@ export default function ReminderModal({
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.secondaryBtnText, { color: theme.textSecondary }]}>
-                    ✕ 关闭
+                    {t('wakeUp.dismiss')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -233,7 +233,7 @@ export default function ReminderModal({
                       activeOpacity={0.7}
                     >
                       <Text style={[styles.snoozeOptionText, { color: theme.primary }]}>
-                        {minutes} 分钟后
+                        {t('wakeUp.minutesLater', { minutes })}
                       </Text>
                     </TouchableOpacity>
                   ))}

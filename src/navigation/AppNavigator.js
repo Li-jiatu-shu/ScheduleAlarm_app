@@ -7,7 +7,7 @@
  */
 
 import React from 'react';
-import { Platform, View, Text, useColorScheme } from 'react-native';
+import { Platform, View, Text } from 'react-native';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -19,7 +19,7 @@ import SettingsScreen from '../screens/SettingsScreen';
 import EditTaskScreen from '../screens/EditTaskScreen';
 import CountdownManagerScreen from '../screens/CountdownManagerScreen';
 
-import { useSettings } from '../context/SettingsContext';
+import { useTheme } from '../hooks/useTheme';
 import { LightTheme, DarkTheme as AppDarkTheme } from '../utils/theme';
 import { t } from '../i18n';
 
@@ -54,20 +54,7 @@ function HomeStack() {
 
 // 底部 Tab
 function MainTabs() {
-  const systemColorScheme = useColorScheme();
-  const { getSetting } = useSettings();
-
-  const themeMode = getSetting('themeMode') || 'auto';
-  let isDark;
-  if (themeMode === 'dark') {
-    isDark = true;
-  } else if (themeMode === 'light') {
-    isDark = false;
-  } else {
-    isDark = systemColorScheme === 'dark';
-  }
-
-  const appTheme = isDark ? AppDarkTheme : LightTheme;
+  const appTheme = useTheme();
 
   return (
     <Tab.Navigator
@@ -143,18 +130,8 @@ function TabIcon({ icon }) {
 
 // 导航容器
 export default function AppNavigator() {
-  const systemColorScheme = useColorScheme();
-  const { getSetting } = useSettings();
-
-  const themeMode = getSetting('themeMode') || 'auto';
-  let isDark;
-  if (themeMode === 'dark') {
-    isDark = true;
-  } else if (themeMode === 'light') {
-    isDark = false;
-  } else {
-    isDark = systemColorScheme === 'dark';
-  }
+  const appTheme = useTheme();
+  const isDark = appTheme === AppDarkTheme;
 
   const navigationTheme = isDark
     ? {

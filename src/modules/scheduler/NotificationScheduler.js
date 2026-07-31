@@ -71,7 +71,9 @@ export async function scheduleEventNotifications(events, options = {}) {
         const eh = parseInt(quietEnd.split(':')[0]) * 60 + parseInt(quietEnd.split(':')[1]);
         const cm = now.getHours() * 60 + now.getMinutes();
         isQuiet = ttsEnabled && (eh <= sh ? (cm >= sh || cm <= eh) : (cm >= sh && cm <= eh));
-      } catch (e) {}
+      } catch (e) {
+        // 静默时段解析失败，保持 isQuiet = false
+      }
 
       const notificationId = await scheduleSingleNotification(event, triggerTime, {
         isQuiet,

@@ -221,6 +221,144 @@ export default {
     },
   },
 
+  // 组件通用文案
+  component: {
+    all: '全部',
+    today: '今天',
+    yesterday: '昨天',
+    tomorrow: '明天',
+    manage: '管理',
+    add_item: '添加',
+    loading: '加载中...',
+    noData: '暂无数据',
+    comingSoon: '即将上线',
+    saveFailed: '保存失败',
+    deleteConfirm: '确认删除',
+    deleteFailed: '删除失败',
+    editHint: '点击编辑',
+    startParsing: '开始解析',
+    testRingtone: '试听 提醒铃声',
+    testWakeUp: '测试起床铃声',
+  },
+
+  // 进度星星
+  progress: {
+    waitingForTasks: '等待今日任务...',
+    allDone: '全部完成！太厉害了 🎉',
+    greatProgress: '进展不错，继续加油 💪',
+    newDay: '新的一天开始啦 ☀️',
+    keepGoing: '还有任务，继续努力 📝',
+    almostDone: '快完成了，坚持就是胜利 🌟',
+    halfDone: '完成一半了，真棒 👍',
+    completed: '{completed}/{total} 已完成',
+  },
+
+  // 时间线
+  timeline: {
+    ongoing: '正在进行中...',
+    upcoming: '即将开始的任务',
+    now: '🔔 正在进行',
+    soon: '📌 即将开始',
+    base: '基础',
+    intensive: '强化',
+    sprint: '冲刺',
+  },
+
+  // 番茄钟
+  pomodoro: {
+    ready: '准备开始',
+    working: '🍅 专注工作中',
+    resting: '☕ 休息一下',
+    longRest: '🎉 长休息',
+    running: '进行中...',
+    paused: '已暂停',
+    tapToStart: '点击开始',
+    noPomodoros: '完成番茄钟将显示在这里',
+    startFocus: '开始专注',
+    pause: '⏸ 暂停',
+    resume: '▶ 继续',
+    reset: '↺ 重置',
+    totalCompleted: '本次已完成 {count} 个番茄钟',
+  },
+
+  // 起床闹钟
+  wakeUp: {
+    ringing: '🌅 起床闹钟',
+    greeting: '早上好！现在是 {time}，该起床了。',
+    noSchedule: '今天没有安排日程，享受美好的一天吧！',
+    todaySchedule: '今天共有{count}个日程，{list}',
+    voicePlaying: '正在播报早安问候...',
+    voiceDone: '早安播报完成',
+    wakeUpNow: '🌅 起床啦！',
+    snoozeMore: '再睡一会',
+    minutesLater: '{minutes} 分钟后',
+    dismiss: '✕ 关闭',
+  },
+
+  // 数据导出
+  export: {
+    noData: '暂无日程数据可导出',
+    exportFailed: '导出失败',
+    title: '小舒日程导出',
+  },
+
+  // 日程方案
+  scheduleSet: {
+    title: '日程方案',
+    saveCurrent: '保存当前方案',
+    saveHint: '将当前日程保存为方案以便切换',
+    switchSet: '切换方案',
+    manage: '管理方案',
+    manageHint: '查看/删除已保存的方案',
+    noSets: '暂无已保存的日程方案',
+    selectTip: '点击方案名称以加载',
+    enterName: '请输入方案名称（如"备考方案"）',
+    saved: '方案"{name}"已保存',
+    switched: '已切换到方案"{name}"',
+    deleted: '方案"{name}"已删除',
+  },
+
+  // 拖延分析
+  delay: {
+    title: '拖延分析',
+    noData: '今日暂无任务数据',
+    delayRate: '拖延率',
+    skippedTasks: '跳过任务：{count} 个',
+    delayedTasks: '延迟完成：{count} 个',
+    onTimeTasks: '按时完成：{count} 个',
+    warning: '⚠ 今日拖延率较高，建议优先完成重要任务',
+    improve: '💪 还有改进空间，继续加油',
+    perfect: '🎉 完美！所有任务按时完成',
+    good: '👍 表现不错，保持节奏',
+  },
+
+  // 导入预览编辑
+  importEdit: {
+    datePlaceholder: '日期 YYYY-MM-DD',
+    startPlaceholder: '开始',
+    endPlaceholder: '结束',
+    phasePlaceholder: '阶段',
+    titlePlaceholder: '任务标题',
+    contentPlaceholder: '具体内容（可选）',
+    deleteItem: '确定要删除"{title}"吗？',
+    existingInfo: '当前已有 {count} 个日程事件，导入将合并新日程（相同日期+时间的任务会更新内容）',
+    pasteTextHint: '直接粘贴日程安排文本内容',
+    weeklyHeatmap: '每周热力图',
+    phaseStats: '阶段统计',
+  },
+
+  // 语言
+  language: '语言 / Language',
+
+  // 账户
+  account: {
+    title: '账户',
+    deleteAccount: '注销账户',
+    deleteAccountDesc: '清除所有数据并重置',
+    deleteAccountMsg: '注销将清除您的所有日程数据、设置和操作日志。此操作不可撤销，确定要继续吗？',
+    deleteAccountConfirm: '确认注销',
+  },
+
   common: {
     confirm: '确定',
     cancel: '取消',
@@ -237,5 +375,8 @@ export default {
     warning: '警告',
     info: '提示',
     comingSoon: '即将上线',
+    deleteConfirm: '删除确认',
+    feedback: '意见反馈',
+    feedbackEmail: '请发送邮件至：support@xiaoshuapp.com',
   },
 };

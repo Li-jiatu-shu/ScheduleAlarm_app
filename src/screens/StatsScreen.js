@@ -232,7 +232,7 @@ export default function StatsScreen() {
 
         {/* 拖延分析 */}
         <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-          拖延分析
+          {t('delay.title')}
         </Text>
         <View style={[styles.heatmapCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           {(() => {
@@ -245,7 +245,7 @@ export default function StatsScreen() {
             if (total === 0) {
               return (
                 <Text style={[styles.delayEmpty, { color: theme.textTertiary }]}>
-                  今日暂无任务数据
+                  {t('delay.noData')}
                 </Text>
               );
             }
@@ -274,32 +274,31 @@ export default function StatsScreen() {
                       {Math.round(delayRate)}%
                     </Text>
                     <Text style={[styles.delayScoreLabel, { color: theme.textTertiary }]}>
-                      拖延率
+                      {t('delay.delayRate')}
                     </Text>
                   </View>
                   <View style={styles.delayStats}>
                     <View style={styles.delayStatRow}>
                       <Text style={styles.delayStatDot}>⏭</Text>
                       <Text style={[styles.delayStatText, { color: theme.textSecondary }]}>
-                        跳过任务：{skipped} 个
+                        {t('delay.skippedTasks', { count: skipped })}
                       </Text>
                     </View>
                     <View style={styles.delayStatRow}>
                       <Text style={styles.delayStatDot}>⏰</Text>
                       <Text style={[styles.delayStatText, { color: theme.textSecondary }]}>
-                        延迟完成：{delayedTasks.length} 个
+                        {t('delay.delayedTasks', { count: delayedTasks.length })}
                       </Text>
                     </View>
                     <View style={styles.delayStatRow}>
                       <Text style={styles.delayStatDot}>✅</Text>
                       <Text style={[styles.delayStatText, { color: theme.textSecondary }]}>
-                        按时完成：{completed - delayedTasks.length} 个
+                        {t('delay.onTimeTasks', { count: completed - delayedTasks.length })}
                       </Text>
                     </View>
                   </View>
                 </View>
 
-                {/* 趋势提示 */}
                 <View style={[styles.delayTip, {
                   backgroundColor: delayRate > 50 ? theme.danger + '15' : delayRate > 25 ? theme.warning + '15' : theme.success + '15',
                 }]}>
@@ -307,12 +306,12 @@ export default function StatsScreen() {
                     color: delayRate > 50 ? theme.danger : delayRate > 25 ? theme.warning : theme.success,
                   }]}>
                     {delayRate > 50
-                      ? '⚠ 今日拖延率较高，建议优先完成重要任务'
+                      ? t('delay.warning')
                       : delayRate > 25
-                        ? '💪 还有改进空间，继续加油'
+                        ? t('delay.improve')
                         : delayRate === 0
-                          ? '🎉 完美！所有任务按时完成'
-                          : '👍 表现不错，保持节奏'}
+                          ? t('delay.perfect')
+                          : t('delay.good')}
                   </Text>
                 </View>
               </View>

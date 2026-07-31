@@ -10,6 +10,7 @@ import {
   View, Text, StyleSheet, Modal, TouchableOpacity, Vibration,
 } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
+import { t } from '../i18n';
 
 const WORK_MINUTES = 25;
 const BREAK_MINUTES = 5;
@@ -115,10 +116,10 @@ export default function PomodoroTimer({ visible, onClose }) {
         : 0;
 
   const phaseLabel = {
-    [PHASE.IDLE]: '准备开始',
-    [PHASE.WORK]: '🍅 专注工作中',
-    [PHASE.BREAK]: '☕ 休息一下',
-    [PHASE.LONG_BREAK]: '🎉 长休息',
+    [PHASE.IDLE]: t('pomodoro.ready'),
+    [PHASE.WORK]: t('pomodoro.working'),
+    [PHASE.BREAK]: t('pomodoro.resting'),
+    [PHASE.LONG_BREAK]: t('pomodoro.longRest'),
   };
 
   const phaseColor = {
@@ -154,7 +155,7 @@ export default function PomodoroTimer({ visible, onClose }) {
                 {timeStr}
               </Text>
               <Text style={[styles.timerSub, { color: theme.textSecondary }]}>
-                {isRunning ? '进行中...' : phase === PHASE.IDLE ? '点击开始' : '已暂停'}
+                {isRunning ? t('pomodoro.running') : phase === PHASE.IDLE ? t('pomodoro.tapToStart') : t('pomodoro.paused')}
               </Text>
             </View>
           </View>
@@ -174,7 +175,7 @@ export default function PomodoroTimer({ visible, onClose }) {
             ))}
             {completedPomodoros === 0 && (
               <Text style={[styles.noPomodoro, { color: theme.textTertiary }]}>
-                完成番茄钟将显示在这里
+                {t('pomodoro.noPomodoros')}
               </Text>
             )}
           </View>
@@ -186,7 +187,7 @@ export default function PomodoroTimer({ visible, onClose }) {
                 style={[styles.mainBtn, { backgroundColor: theme.danger }]}
                 onPress={startWork}
               >
-                <Text style={styles.mainBtnText}>开始专注</Text>
+                <Text style={styles.mainBtnText}>{t('pomodoro.startFocus')}</Text>
               </TouchableOpacity>
             ) : (
               <>
@@ -195,28 +196,28 @@ export default function PomodoroTimer({ visible, onClose }) {
                     style={[styles.controlBtn, { backgroundColor: theme.warning + '30' }]}
                     onPress={pauseTimer}
                   >
-                    <Text style={[styles.controlBtnText, { color: theme.warning }]}>⏸ 暂停</Text>
+                    <Text style={[styles.controlBtnText, { color: theme.warning }]}>{t('pomodoro.pause')}</Text>
                   </TouchableOpacity>
                 ) : (
                   <TouchableOpacity
                     style={[styles.controlBtn, { backgroundColor: theme.success + '30' }]}
                     onPress={startTimer}
                   >
-                    <Text style={[styles.controlBtnText, { color: theme.success }]}>▶ 继续</Text>
+                    <Text style={[styles.controlBtnText, { color: theme.success }]}>{t('pomodoro.resume')}</Text>
                   </TouchableOpacity>
                 )}
                 <TouchableOpacity
                   style={[styles.controlBtn, { backgroundColor: theme.surfaceSecondary }]}
                   onPress={resetTimer}
                 >
-                  <Text style={[styles.controlBtnText, { color: theme.textSecondary }]}>↺ 重置</Text>
+                  <Text style={[styles.controlBtnText, { color: theme.textSecondary }]}>{t('pomodoro.reset')}</Text>
                 </TouchableOpacity>
               </>
             )}
           </View>
 
           <Text style={[styles.totalLabel, { color: theme.textTertiary }]}>
-            本次已完成 {completedPomodoros} 个番茄钟
+            {t('pomodoro.totalCompleted', { count: completedPomodoros })}
           </Text>
         </View>
       </View>

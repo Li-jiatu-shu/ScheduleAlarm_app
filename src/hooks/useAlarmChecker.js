@@ -95,7 +95,7 @@ export function useAlarmChecker() {
 
     // 起床闹钟不受静默时段限制
     if (!isWakeUp && inQuiet) {
-      addLog(event.id, 'triggered_quiet', '静默时段').catch(() => {});
+      addLog(event.id, 'triggered_quiet', '静默时段').catch((e) => console.warn('记录日志失败:', e));
       alarmsInFlightRef.current.delete(event.id);
       return;
     }
@@ -341,7 +341,7 @@ export function useAlarmChecker() {
             }
           }
         } catch (e) {
-          // 补偿检查失败不影响主流程
+          console.warn('补偿检查失败（不影响主流程）:', e);
         }
       } catch (e) {
         console.warn('闹钟检查异常:', e);

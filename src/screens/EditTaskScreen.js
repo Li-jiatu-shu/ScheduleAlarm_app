@@ -96,7 +96,7 @@ export default function EditTaskScreen({ route, navigation }) {
           id: eventId, phase, date, start_time: startTime, end_time: endTime,
           title: title.trim(), content: content.trim(), enabled: enabled ? 1 : 0,
         }], { advanceMinutes: 0 });
-      } catch (e) { /* 通知调度失败不影响保存 */ }
+      } catch (e) { console.warn('通知重调度失败（不影响保存）:', e); }
 
       Alert.alert(t('common.success'), t('edit.saveSuccess'), [
         { text: t('common.confirm'), onPress: () => navigation.goBack() },
