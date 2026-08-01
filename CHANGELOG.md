@@ -4,6 +4,44 @@ All notable changes to 小舒日程闹钟 will be documented in this file.
 
 ---
 
+## [1.4.0] — 2026-08-01
+
+### 🔧 Fixed
+- **构建错误**：修复 `useAlarmChecker.js` 中 `todayTriggered` 在同一作用域内重复声明导致 EAS Build 失败
+- **铃声试听无声音**：修复设置页点击测试提醒/起床铃声时仅有振动无声音的问题。根因是 production build 中 `require('.wav')` 返回格式不一致，现已改用 `expo-asset` 的 `Asset.fromModule()` 显式解析本地 URI 后传给 `AudioPlayer.play({ uri })`
+- **首页无日程时倒计时隐藏**：重构 HomeScreen 布局，倒计时区域和番茄钟按钮始终显示
+
+### ✨ Changed
+- **倒计时功能彻底重构**
+  - **天数计算**：`Math.ceil((目标0点 - 当前0点) / 86400000)`，过 0 点即算 1 天。≤0 显示"已结束"
+  - **简洁UI**：仅保留事件名称 + 目标日期两个字段，卡片显示"距离XXX还剩 N 天"
+  - **日期滚轮选择器** (`DateWheelPicker`)：纯 JS 跨平台年/月/日三列滚轮，无需第三方原生模块。自动适配闰年和每月天数
+  - **刷新机制**：每 10 分钟 + App 前台切回 + 午夜跨天检测三重保障
+  - **多事件支持**：可添加任意数量倒计时（考研、高考、生日...），独立编辑/删除
+- **首页UI全面优化**
+  - 吉祥物 + 星期几 + 最紧迫倒计时合并为统一的"日期头部卡片"
+  - 倒计时天数紧邻"周六"显示在右侧
+  - 其余倒计时以下方水平滚动卡片展示
+  - 无倒计时时显示虚线占位框"+ 添加倒计时"，引导用户设置
+  - 番茄钟浮动按钮保留，所有页面状态下均可见
+- **设置页铃声测试按钮**：移除动态 `require`，改用顶层静态导入 `playAlarm`
+
+### 📝 Files Changed
+| 文件 | 操作 |
+|------|------|
+| `src/hooks/useAlarmChecker.js` | 修复 |
+| `src/modules/notifier/Notifier.js` | 重写音频加载逻辑 |
+| `src/screens/SettingsScreen.js` | 静态导入优化 |
+| `src/components/CountdownCard.js` | 重写 |
+| `src/components/CountdownEditor.js` | 重写 |
+| `src/components/DateWheelPicker.js` | **新增** |
+| `src/screens/HomeScreen.js` | 重写布局 |
+| `src/screens/CountdownManagerScreen.js` | 修改排序 |
+| `app.json` | 版本号 1.3.0 → 1.4.0 |
+| `package.json` | 版本号 1.3.0 → 1.4.0 |
+
+---
+
 ## [1.3.0] — 2026-07-31
 
 ### ✨ Added
