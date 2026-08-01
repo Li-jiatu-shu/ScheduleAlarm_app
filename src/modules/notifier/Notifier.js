@@ -11,13 +11,47 @@
  */
 import * as Speech from 'expo-speech';
 import { Platform, Vibration } from 'react-native';
+import { Asset } from 'expo-asset';
+import { AudioPlayer } from 'expo-audio';
 import { truncateText } from '../../utils/helpers';
 
-// 音频资源映射
-const AUDIO_ASSETS = {
-  alarm: require('../../../assets/alarm-sound.wav'),
-  clock: require('../../../assets/clock-sound.wav'),
-};
+// 音频资源模块引用（静态 require 确保 Metro 打包）
+const ALARM_MODULE = require('../../../assets/alarm-sound.wav');
+const CLOCK_MODULE = require('../../../assets/clock-sound.wav');
+
+// 缓存已解析的音频 URI
+let _alarmUri = null;
+let _clockUri = null;
+
+/**
+ * 解析音频资源的本地 URI（解决 production build 中 require 返回结构不一致的问题）
+ */
+async function resolveAudioUri(moduleRef) {
+  try {
+    const asset = await Asset.fromModule(moduleRef);
+    await asset.downloadAsync();
+    return asset.localUri || asset.uri;
+  } catch (e) {
+    console.warn('音频资源解析失败:', e.message);
+    // 回退：尝试直接从 module 中取 uri
+    if (moduleRef && typeof moduleRef === 'object' && moduleRef.uri) {
+      return moduleRef.uri;
+    }
+    return null;
+  }
+}
+
+/**
+ * 获取音频 URI（带缓存）
+ */
+async function getAudioUri(type) {
+  if (type === 'clock') {
+    if (!_clockUri) _clockUri = await resolveAudioUri(CLOCK_MODULE);
+    return _clockUri;
+  }
+  if (!_alarmUri) _alarmUri = await resolveAudioUri(ALARM_MODULE);
+  return _alarmUri;
+}
 
 // ---- TTS 语音播报 ----
 
@@ -135,70 +169,74 @@ export async function playAlarm(options = {}) {
   const startVibration = () => {
     const PATTERN = [0, 400, 300, 400, 300, 400];
     Vibration.vibrate(PATTERN);
-    // 使用重复振动模式
-    if (Platform.OS === 'android') {
-      _vibrateInterval = setInterval(() => {
-        if (!_alarmStopped) Vibration.vibrate(PATTERN);
-      }, 2200);
-    } else {
-      _vibrateInterval = setInterval(() => {
-        if (!_alarmStopped) Vibration.vibrate(PATTERN);
-      }, 2200);
-    }
+    _vibrateInterval = setInterval(() => {
+      if (!_alarmStopped) Vibration.vibrate(PATTERN);
+    }, 2200);
   };
 
   startVibration();
 
   // 使用 expo-audio 播放闹钟铃声
   try {
-    const { AudioPlayer } = require('expo-audio');
+    // 先解析音频 URI（带 Asset 模块解析，确保 production build 中正确获取文件路径）
+    const audioUri = await getAudioUri(soundType);
+    if (!audioUri) {
+      console.warn('音频 URI 解析失败，使用振动代替');
+      return makeStopHandle();
+    }
+
     const player = new AudioPlayer();
     player.volume = volume;
     player.loop = loop;
     _alarmPlayer = player;
 
-    // 根据 soundType 选择音频资源
-    const audioAsset = AUDIO_ASSETS[soundType] || AUDIO_ASSETS.alarm;
-
     try {
-      await player.play(audioAsset);
-    } catch (assetErr) {
-      console.warn(`无法加载${soundType}音频，尝试回退:`, assetErr.message);
-      // 回退：尝试使用默认闹钟音频
-      try {
-        await player.play(AUDIO_ASSETS.alarm);
-      } catch (fallbackErr) {
-        console.warn('闹钟音频播放失败，仅使用振动+语音:', fallbackErr.message);
+      await player.play({ uri: audioUri });
+    } catch (playErr) {
+      console.warn(`播放${soundType}音频失败:`, playErr.message);
+      // 回退：如果 clock 播放失败，尝试 alarm
+      if (soundType === 'clock') {
+        const fallbackUri = await getAudioUri('alarm');
+        if (fallbackUri) {
+          try {
+            await player.play({ uri: fallbackUri });
+            return makeStopHandle(player);
+          } catch (fbErr) {
+            console.warn('回退音频也播放失败:', fbErr.message);
+          }
+        }
       }
+      // 清理播放器
+      try { player.stop(); } catch (e) { /* ignore */ }
+      _alarmPlayer = null;
+      return makeStopHandle();
     }
 
-    return {
-      stop: () => {
-        _alarmStopped = true;
-        try {
-          if (_alarmPlayer) { _alarmPlayer.stop(); _alarmPlayer = null; }
-        } catch (e) { /* ignore */ }
-        if (_vibrateInterval) {
-          clearInterval(_vibrateInterval);
-          _vibrateInterval = null;
-        }
-        Vibration.cancel();
-      },
-      player,
-    };
+    return makeStopHandle(player);
   } catch (e) {
-    console.warn('AudioPlayer 不可用，使用振动+系统通知代替:', e.message);
-    return {
-      stop: () => {
-        _alarmStopped = true;
-        if (_vibrateInterval) {
-          clearInterval(_vibrateInterval);
-          _vibrateInterval = null;
-        }
-        Vibration.cancel();
-      },
-    };
+    console.warn('AudioPlayer 创建失败:', e.message);
+    return makeStopHandle();
   }
+}
+
+/**
+ * 创建 stop 句柄
+ */
+function makeStopHandle(player) {
+  return {
+    stop: () => {
+      _alarmStopped = true;
+      try {
+        if (_alarmPlayer) { _alarmPlayer.stop(); _alarmPlayer = null; }
+      } catch (e) { /* ignore */ }
+      if (_vibrateInterval) {
+        clearInterval(_vibrateInterval);
+        _vibrateInterval = null;
+      }
+      Vibration.cancel();
+    },
+    player: player || null,
+  };
 }
 
 export default { playAlarm, speakEvent, stopSpeech, isSpeaking, testSpeech };

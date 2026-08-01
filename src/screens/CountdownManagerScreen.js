@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../hooks/useTheme';
 import { t } from '../i18n';
-import CountdownCard from '../components/CountdownCard';
+import CountdownCard, { calcDaysRemaining } from '../components/CountdownCard';
 import CountdownEditor from '../components/CountdownEditor';
 import EmptyState from '../components/EmptyState';
 import * as Database from '../modules/storage/Database';
@@ -140,7 +140,7 @@ export default function CountdownManagerScreen({ navigation }) {
               共 {countdowns.length} 个倒计时
             </Text>
             {countdowns
-              .sort((a, b) => (a.targetDate || '').localeCompare(b.targetDate || ''))
+              .sort((a, b) => calcDaysRemaining(a.targetDate) - calcDaysRemaining(b.targetDate))
               .map((c) => (
                 <View key={c.id} style={styles.cardRow}>
                   <View style={styles.cardWrapper}>

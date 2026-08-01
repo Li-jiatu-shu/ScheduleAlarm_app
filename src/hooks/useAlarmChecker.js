@@ -288,9 +288,6 @@ export function useAlarmChecker() {
 
         // ---- 日程事件检查 ----
 
-        if (!triggeredRef.current[today]) triggeredRef.current[today] = new Set();
-        const todayTriggered = triggeredRef.current[today];
-
         const matchedEvents = [];
 
         for (const e of events) {

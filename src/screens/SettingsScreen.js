@@ -20,7 +20,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../hooks/useTheme';
 import { useSettings } from '../context/SettingsContext';
-import { testSpeech } from '../modules/notifier/Notifier';
+import { testSpeech, playAlarm } from '../modules/notifier/Notifier';
 import * as Database from '../modules/storage/Database';
 import ConfirmDialog from '../components/ConfirmDialog';
 import PrivacyModal from '../components/PrivacyModal';
@@ -392,10 +392,9 @@ export default function SettingsScreen() {
           <TouchableOpacity
             style={[styles.row]}
             onPress={() => {
-              const Notifier = require('../modules/notifier/Notifier');
               const type = settings.reminderSoundType || 'alarm';
               const vol = settings.alarmVolume || 0.8;
-              Notifier.playAlarm({
+              playAlarm({
                 volume: vol,
                 soundType: type,
                 loop: type === 'clock',
@@ -468,9 +467,8 @@ export default function SettingsScreen() {
           <TouchableOpacity
             style={[styles.row]}
             onPress={() => {
-              const Notifier = require('../modules/notifier/Notifier');
               const vol = settings.wakeUpVolume || 0.9;
-              Notifier.playAlarm({
+              playAlarm({
                 volume: vol,
                 soundType: 'clock',
                 loop: true,

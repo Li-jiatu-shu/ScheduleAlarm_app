@@ -1,52 +1,36 @@
 /**
  * CountdownCard — 倒计时卡片组件
  *
- * 显示单个倒计时：图标、名称、剩余天数、目标日期。
- * 天数越少颜色越紧急：红(<3) → 橙(<7) → 蓝(<30) → 绿(>=30)
+ * 简洁显示"距离[事件名]还剩 N 天"。
+ * 若已过目标日期则显示"[事件名]已结束"。
+ *
+ * 天数计算规则：
+ * - 当前时间重置为当天 0:00
+ * - 目标日期重置为当天 0:00
+ * - Math.ceil（过了今天0点就算1天）
+ * - ≤0 → 已结束
  */
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
-import { formatDate } from '../utils/helpers';
 
 /**
- * 计算两个日期相差的天数（date2 - date1）
+ * 计算剩余天数
+ * @param {string} targetDateStr - 目标日期 YYYY-MM-DD
+ * @returns {number} 剩余天数（≤0 表示已过期）
  */
-function daysBetween(dateStr1, dateStr2) {
-  const d1 = new Date(dateStr1);
-  const d2 = new Date(dateStr2);
-  d1.setHours(0, 0, 0, 0);
-  d2.setHours(0, 0, 0, 0);
-  return Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
-}
-
-/**
- * 根据剩余天数返回紧急程度颜色
- */
-function getUrgencyColor(days, theme) {
-  if (days < 0) return theme.textTertiary;    // 已过期
-  if (days <= 3) return theme.danger;          // 红色 — 3天内
-  if (days <= 7) return theme.warning;          // 橙色 — 7天内
-  if (days <= 30) return theme.info;            // 蓝色 — 30天内
-  return theme.success;                          // 绿色 — 30天以上
+export function calcDaysRemaining(targetDateStr) {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const target = new Date(targetDateStr + 'T00:00:00');
+  const diffMs = target.getTime() - now.getTime();
+  return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 }
 
 export default function CountdownCard({ countdown, onPress, compact }) {
   const theme = useTheme();
-  const today = formatDate(new Date());
-  const days = daysBetween(today, countdown.targetDate);
-
-  const urgencyColor = getUrgencyColor(days, theme);
-
-  // 剩余天数文字
-  let daysText;
-  if (days < 0) {
-    daysText = `已过 ${Math.abs(days)} 天`;
-  } else if (days === 0) {
-    daysText = '就是今天！';
-  } else {
-    daysText = `${days}`;
-  }
+  const days = calcDaysRemaining(countdown.targetDate);
+  const isExpired = days <= 0;
 
   if (compact) {
     // 紧凑模式：用于首页横向滚动
@@ -54,24 +38,22 @@ export default function CountdownCard({ countdown, onPress, compact }) {
       <TouchableOpacity
         style={[styles.compactCard, {
           backgroundColor: theme.surfaceSecondary,
-          borderColor: urgencyColor + '40',
+          borderColor: isExpired ? theme.textTertiary + '40' : theme.primary + '30',
         }]}
         onPress={() => onPress && onPress(countdown)}
         activeOpacity={0.8}
       >
-        <Text style={styles.compactEmoji}>{countdown.emoji || '📅'}</Text>
-        <Text style={[styles.compactDays, { color: urgencyColor }]}>
-          {daysText}
+        <Text style={[styles.compactLabel, { color: theme.textSecondary }]} numberOfLines={1}>
+          距离{countdown.title}
         </Text>
-        <Text style={[styles.compactUnit, { color: urgencyColor }]}>
-          {days < 0 ? '' : days === 0 ? '' : '天'}
-        </Text>
-        <Text style={[styles.compactTitle, { color: theme.textPrimary }]} numberOfLines={1}>
-          {countdown.title}
-        </Text>
-        <Text style={[styles.compactDate, { color: theme.textTertiary }]}>
-          {countdown.targetDate}
-        </Text>
+        {isExpired ? (
+          <Text style={[styles.compactExpired, { color: theme.textTertiary }]}>已结束</Text>
+        ) : (
+          <View style={styles.compactDaysRow}>
+            <Text style={[styles.compactDays, { color: theme.primary }]}>{days}</Text>
+            <Text style={[styles.compactUnit, { color: theme.primary }]}>天</Text>
+          </View>
+        )}
       </TouchableOpacity>
     );
   }
@@ -81,64 +63,76 @@ export default function CountdownCard({ countdown, onPress, compact }) {
     <TouchableOpacity
       style={[styles.fullCard, {
         backgroundColor: theme.surface,
-        borderLeftColor: urgencyColor,
+        borderLeftColor: isExpired ? theme.textTertiary : theme.primary,
       }]}
       onPress={() => onPress && onPress(countdown)}
       activeOpacity={0.8}
     >
-      <View style={styles.fullLeft}>
-        <Text style={styles.fullEmoji}>{countdown.emoji || '📅'}</Text>
+      <View style={styles.fullInfo}>
+        <Text style={[styles.fullLabel, { color: theme.textSecondary }]}>
+          距离{countdown.title}
+        </Text>
+        <Text style={[styles.fullDate, { color: theme.textTertiary }]}>
+          目标日期：{countdown.targetDate}
+        </Text>
       </View>
-      <View style={styles.fullCenter}>
-        <Text style={[styles.fullTitle, { color: theme.textPrimary }]} numberOfLines={1}>
-          {countdown.title}
-        </Text>
-        <Text style={[styles.fullDate, { color: theme.textSecondary }]}>
-          {countdown.targetDate}
-        </Text>
-        {countdown.type && countdown.type !== 'other' ? (
-          <View style={[styles.typeTag, { backgroundColor: (countdown.color || theme.primary) + '20' }]}>
-            <Text style={[styles.typeTagText, { color: countdown.color || theme.primary }]}>
-              {countdown.type}
-            </Text>
-          </View>
-        ) : null}
-      </View>
-      <View style={[styles.fullRight, { backgroundColor: urgencyColor + '15' }]}>
-        <Text style={[styles.fullDaysNumber, { color: urgencyColor }]}>
-          {daysText}
-        </Text>
-        <Text style={[styles.fullDaysLabel, { color: urgencyColor }]}>
-          {days < 0 ? '' : days === 0 ? '🎉' : '天'}
-        </Text>
+      <View style={[styles.fullRight, {
+        backgroundColor: isExpired ? theme.textTertiary + '15' : theme.primary + '15',
+      }]}>
+        {isExpired ? (
+          <Text style={[styles.fullExpired, { color: theme.textTertiary }]}>已结束</Text>
+        ) : (
+          <>
+            <Text style={[styles.fullDays, { color: theme.primary }]}>{days}</Text>
+            <Text style={[styles.fullUnit, { color: theme.primary }]}>天</Text>
+          </>
+        )}
       </View>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  // 紧凑模式
+  // 紧凑模式（首页横向滚动）
   compactCard: {
-    width: 110,
+    width: 120,
     borderRadius: 18,
     borderWidth: 1.5,
     padding: 12,
     alignItems: 'center',
     marginRight: 10,
   },
-  compactEmoji: { fontSize: 28, marginBottom: 6 },
-  compactDays: { fontSize: 28, fontWeight: '800' },
-  compactUnit: { fontSize: 11, fontWeight: '600', marginTop: -2, marginBottom: 4 },
-  compactTitle: { fontSize: 12, fontWeight: '600', textAlign: 'center', marginBottom: 2 },
-  compactDate: { fontSize: 10 },
+  compactLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  compactDaysRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  compactDays: {
+    fontSize: 36,
+    fontWeight: '800',
+  },
+  compactUnit: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 2,
+  },
+  compactExpired: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
 
-  // 完整模式
+  // 完整模式（管理页面）
   fullCard: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 16,
     borderLeftWidth: 4,
-    padding: 14,
+    padding: 16,
     marginBottom: 10,
     elevation: 1,
     shadowColor: '#000',
@@ -146,21 +140,37 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
   },
-  fullLeft: { marginRight: 12 },
-  fullEmoji: { fontSize: 32 },
-  fullCenter: { flex: 1 },
-  fullTitle: { fontSize: 16, fontWeight: '700', marginBottom: 2 },
-  fullDate: { fontSize: 13, marginBottom: 4 },
-  typeTag: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 },
-  typeTagText: { fontSize: 11, fontWeight: '600' },
+  fullInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
+  fullLabel: {
+    fontSize: 17,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  fullDate: {
+    fontSize: 13,
+  },
   fullRight: {
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    minWidth: 56,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    minWidth: 64,
   },
-  fullDaysNumber: { fontSize: 24, fontWeight: '800' },
-  fullDaysLabel: { fontSize: 12, fontWeight: '600', marginTop: -2 },
+  fullDays: {
+    fontSize: 28,
+    fontWeight: '800',
+  },
+  fullUnit: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: -2,
+  },
+  fullExpired: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
 });
