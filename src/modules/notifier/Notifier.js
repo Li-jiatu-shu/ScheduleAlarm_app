@@ -6,8 +6,9 @@
  * playAlarm 使用 expo-audio 播放闹钟铃声（支持熄屏播放）。
  *
  * 支持的音频资源：
- * - alarm-sound.wav  — 短促闹铃，用于日程提醒弹窗
- * - clock-sound.wav  — 长音频铃声，用于起床闹钟
+ * - alarm-sound.wav  — 短促闹铃，用于日常日程提醒
+ * - clock-sound.wav  — 长音频强力铃声，用于起床/午休等时段
+ * - 自定义铃声      — 用户上传的铃声文件（URI），优先于 clock-sound.wav
  */
 import * as Speech from 'expo-speech';
 import { Platform, Vibration } from 'react-native';
@@ -43,9 +44,16 @@ async function resolveAudioUri(moduleRef) {
 
 /**
  * 获取音频 URI（带缓存）
+ * @param {'alarm'|'clock'|'custom'} type
+ * @param {string} [customUri] - 自定义铃声的文件 URI
  */
-async function getAudioUri(type) {
-  if (type === 'clock') {
+async function getAudioUri(type, customUri = null) {
+  if (type === 'custom' && customUri) {
+    return customUri;
+  }
+  if (type === 'clock' || type === 'custom') {
+    // 自定义铃声优先，否则使用内置 clock-sound.wav
+    if (customUri) return customUri;
     if (!_clockUri) _clockUri = await resolveAudioUri(CLOCK_MODULE);
     return _clockUri;
   }
@@ -142,14 +150,16 @@ let _alarmStopped = false;
  *
  * @param {Object} options
  * @param {number} [options.volume=0.8] - 音量 (0.0-1.0)
- * @param {'alarm'|'clock'} [options.soundType='alarm'] - 音频类型
- *   - 'alarm': 短促闹铃(alarm-sound.wav)，用于日程提醒弹窗
- *   - 'clock': 长音频铃声(clock-sound.wav)，用于起床闹钟
- * @param {boolean} [options.loop=true] - 是否循环播放（起床闹钟建议 true）
+ * @param {'alarm'|'clock'|'custom'} [options.soundType='alarm'] - 音频类型
+ *   - 'alarm': 短促闹铃(alarm-sound.wav)，用于日常日程提醒
+ *   - 'clock': 长音频强力铃声(clock-sound.wav)，用于起床/午休
+ *   - 'custom': 用户上传的自定义铃声，若无则回退到 clock-sound.wav
+ * @param {string} [options.customUri] - 自定义铃声的文件 URI（仅 soundType='custom' 时有效）
+ * @param {boolean} [options.loop=true] - 是否循环播放
  * @returns {{ stop: Function }} 返回 stop 方法用于停止
  */
 export async function playAlarm(options = {}) {
-  const { volume = 0.8, soundType = 'alarm', loop = true } = options;
+  const { volume = 0.8, soundType = 'alarm', customUri = null, loop = true } = options;
 
   // 清理之前可能残留的闹铃状态（防止孤儿定时器）
   _alarmStopped = true;
@@ -178,8 +188,8 @@ export async function playAlarm(options = {}) {
 
   // 使用 expo-audio 播放闹钟铃声
   try {
-    // 先解析音频 URI（带 Asset 模块解析，确保 production build 中正确获取文件路径）
-    const audioUri = await getAudioUri(soundType);
+    // 解析音频 URI（支持自定义铃声 URI）
+    const audioUri = await getAudioUri(soundType, customUri);
     if (!audioUri) {
       console.warn('音频 URI 解析失败，使用振动代替');
       return makeStopHandle();
@@ -194,15 +204,31 @@ export async function playAlarm(options = {}) {
       await player.play({ uri: audioUri });
     } catch (playErr) {
       console.warn(`播放${soundType}音频失败:`, playErr.message);
-      // 回退：如果 clock 播放失败，尝试 alarm
-      if (soundType === 'clock') {
-        const fallbackUri = await getAudioUri('alarm');
-        if (fallbackUri) {
+      // 回退链：custom → clock → alarm
+      if (soundType === 'custom' || soundType === 'clock') {
+        // 先尝试 clock（如果当前是 custom 且 clock 不同）
+        const fbType = soundType === 'custom' ? 'clock' : 'alarm';
+        const fallbackUri = soundType === 'custom'
+          ? await getAudioUri('clock')
+          : await getAudioUri('alarm');
+        if (fallbackUri && fallbackUri !== audioUri) {
           try {
             await player.play({ uri: fallbackUri });
             return makeStopHandle(player);
           } catch (fbErr) {
-            console.warn('回退音频也播放失败:', fbErr.message);
+            console.warn(`回退到${fbType}也失败:`, fbErr.message);
+            // 最后尝试 alarm
+            if (soundType === 'custom') {
+              const lastUri = await getAudioUri('alarm');
+              if (lastUri) {
+                try {
+                  await player.play({ uri: lastUri });
+                  return makeStopHandle(player);
+                } catch (lbErr) {
+                  console.warn('最终回退也失败:', lbErr.message);
+                }
+              }
+            }
           }
         }
       }

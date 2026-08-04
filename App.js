@@ -4,8 +4,9 @@
 import React, { useRef, useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, AppState } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import * as Notifications from 'expo-notifications';
 
 import { ScheduleProvider, useSchedule } from './src/context/ScheduleContext';
 import { SettingsProvider } from './src/context/SettingsContext';
@@ -21,6 +22,22 @@ import { initLocale } from './src/i18n';
 function AppContent() {
   // 初始化语言设置
   useEffect(() => { initLocale(); }, []);
+
+  // 启动时清除通知栏残留通知
+  useEffect(() => {
+    Notifications.dismissAllNotificationsAsync?.().catch(() => {});
+  }, []);
+
+  // App 从后台切回前台时清除通知栏 + 取消已调度通知的 badge
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        Notifications.dismissAllNotificationsAsync?.().catch(() => {});
+        Notifications.setBadgeCountAsync?.(0).catch(() => {});
+      }
+    });
+    return () => sub.remove();
+  }, []);
 
   const { permissionGranted, registerForegroundHandler } = useNotifications();
   const schedule = useSchedule();

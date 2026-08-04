@@ -14,6 +14,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Modal, Platform, Image,
 } from 'react-native';
+import * as Notifications from 'expo-notifications';
 import { useTheme } from '../hooks/useTheme';
 import { t } from '../i18n';
 
@@ -37,7 +38,7 @@ export default function ReminderModal({
     autoStartedRef.current = false;
   }, [visible, event]);
 
-  // 监听语音完成 → 自动开始执行
+  // 监听语音完成 → 自动开始执行（起床/午休闹钟仅自动关闭）
   useEffect(() => {
     if (
       visible &&
@@ -46,11 +47,16 @@ export default function ReminderModal({
       !autoStartedRef.current
     ) {
       autoStartedRef.current = true;
-      // 延迟1秒给用户缓冲，然后自动开始
+      const isWakeOrNap = event?.phase === '起床闹钟' || event?.phase === '午休闹钟';
       const timer = setTimeout(() => {
         if (!hasInteracted.current) {
-          onAction?.('start', event);
-          onClose?.();
+          if (isWakeOrNap) {
+            // 起床/午休闹钟：自动关闭弹窗即可
+            onClose?.();
+          } else {
+            onAction?.('start', event);
+            onClose?.();
+          }
         }
       }, 1000);
       return () => clearTimeout(timer);
@@ -92,6 +98,14 @@ export default function ReminderModal({
   const eventEndTime = event.end_time || event.data?.endTime || '';
   const eventPhase = event.phase || event.data?.phase || '';
   const isWakeUp = eventPhase === '起床闹钟';
+  const isNap = eventPhase === '午休闹钟';
+
+  // 关闭时清除通知栏
+  useEffect(() => {
+    if (!visible) {
+      Notifications.dismissAllNotificationsAsync?.().catch(() => {});
+    }
+  }, [visible]);
 
   return (
     <Modal
@@ -101,11 +115,16 @@ export default function ReminderModal({
       onRequestClose={handleClose}
     >
       <View style={[styles.overlay, { backgroundColor: theme.background }]}>
-        {/* 顶部状态栏提示 — 起床闹钟用不同样式 */}
+        {/* 顶部状态栏提示 — 不同闹钟类型用不同样式 */}
         {isWakeUp ? (
           <View style={[styles.topBar, { backgroundColor: '#FF9A56' }]}>
             <Text style={styles.wakeUpEmoji}>⏰</Text>
             <Text style={styles.topBarText}>{t('wakeUp.ringing')}</Text>
+          </View>
+        ) : isNap ? (
+          <View style={[styles.topBar, { backgroundColor: '#FFB347' }]}>
+            <Text style={styles.wakeUpEmoji}>☀️</Text>
+            <Text style={styles.topBarText}>午休闹钟</Text>
           </View>
         ) : (
           <View style={[styles.topBar, { backgroundColor: theme.warning }]}>
@@ -125,21 +144,27 @@ export default function ReminderModal({
               <>
                 <Text style={[styles.voiceIcon]}>🔊</Text>
                 <Text style={[styles.voiceText, { color: theme.primary }]}>
-                  {isWakeUp ? t('wakeUp.voicePlaying') : '正在语音播报任务内容...'}
+                  {isWakeUp ? t('wakeUp.voicePlaying')
+                    : isNap ? '正在播报午休提醒...'
+                    : '正在语音播报任务内容...'}
                 </Text>
               </>
             ) : voiceFinished ? (
               <>
                 <Text style={[styles.voiceIcon]}>✅</Text>
                 <Text style={[styles.voiceText, { color: theme.success }]}>
-                  {isWakeUp ? t('wakeUp.voiceDone') : '语音播报完成，即将自动开始...'}
+                  {isWakeUp ? t('wakeUp.voiceDone')
+                    : isNap ? '午休提醒完成'
+                    : '语音播报完成，即将自动开始...'}
                 </Text>
               </>
             ) : (
               <>
                 <Text style={[styles.voiceIcon]}>📋</Text>
                 <Text style={[styles.voiceText, { color: theme.textSecondary }]}>
-                  {isWakeUp ? '早上好！查看今日日程' : '请在下方选择操作'}
+                  {isWakeUp ? '早上好！查看今日日程'
+                    : isNap ? '该午休了，休息一下吧 ☀️'
+                    : '请在下方选择操作'}
                 </Text>
               </>
             )}
@@ -185,16 +210,16 @@ export default function ReminderModal({
 
         {/* 底部操作按钮 */}
         <View style={[styles.actions, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
-          {isWakeUp ? (
+          {isWakeUp || isNap ? (
             <>
-              {/* 起床闹钟：起床按钮 */}
+              {/* 起床/午休闹钟：关闭按钮 */}
               <TouchableOpacity
-                style={[styles.startButton, { backgroundColor: '#FF9A56' }]}
+                style={[styles.startButton, { backgroundColor: isWakeUp ? '#FF9A56' : '#FFB347' }]}
                 onPress={handleClose}
                 activeOpacity={0.7}
               >
                 <Text style={styles.startButtonText}>
-                  {t('wakeUp.wakeUpNow')}
+                  {isWakeUp ? t('wakeUp.wakeUpNow') : '☀️ 好的，知道了'}
                 </Text>
               </TouchableOpacity>
 
@@ -222,7 +247,7 @@ export default function ReminderModal({
                 </TouchableOpacity>
               </View>
 
-              {/* 稍后提醒选项菜单 — 起床闹钟使用更长的延迟 */}
+              {/* 稍后提醒选项菜单 */}
               {snoozeMenuOpen && (
                 <View style={[styles.snoozeMenu, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                   {[5, 10, 15, 20].map((minutes) => (

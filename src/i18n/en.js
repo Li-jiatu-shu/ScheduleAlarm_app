@@ -117,6 +117,34 @@ export default {
     wakeUpVolume: 'Wake-up Volume',
     wakeUpTest: 'Test Wake-up Alarm',
 
+    // Ringtone management
+    ringtoneManagement: 'Ringtone Management',
+    customRingtone: 'Custom Strong Ringtone',
+    customRingtoneDesc: 'Upload audio file as strong ringtone (for wake-up/nap etc.)',
+    customRingtoneSet: 'Custom ringtone set',
+    customRingtoneNotSet: 'Not set, using built-in strong ringtone',
+    customRingtoneUpload: 'Upload Ringtone',
+    clearCustomRingtone: 'Reset to Default',
+    clearCustomRingtoneDesc: 'Use built-in clock-sound.wav',
+    testStrongRingtone: 'Test Strong Ringtone',
+    testNormalRingtone: 'Test Normal Ringtone',
+
+    // Strong ringtone slots
+    strongRingtoneSlots: 'Strong Ringtone Time Slots',
+    strongRingtoneSlotsHint: 'Strong ringtone (custom or clock-sound.wav) plays in these slots; normal ringtone plays otherwise',
+    addStrongSlot: 'Add Time Slot',
+    removeSlot: 'Remove',
+    morningSlot: 'Morning 6:00-8:00',
+    noonSlot: 'Noon 12:00-14:00',
+    eveningSlot: 'Evening 21:00-23:00',
+    slotAdded: 'Slot added',
+
+    // Nap alarm
+    napAlarm: 'Nap Alarm',
+    napAlarmEnabled: 'Enable Nap Alarm',
+    napAlarmEnabledDesc: 'Daily nap reminder (uses strong ringtone)',
+    napAlarmTime: 'Nap Time',
+
     theme: 'Theme',
     themeAuto: 'System',
     themeLight: 'Light',

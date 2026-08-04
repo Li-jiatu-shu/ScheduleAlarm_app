@@ -120,6 +120,34 @@ export default {
     wakeUpVolume: '起床铃声音量',
     wakeUpTest: '测试起床铃声',
 
+    // 铃声管理
+    ringtoneManagement: '铃声管理',
+    customRingtone: '自定义强力铃声',
+    customRingtoneDesc: '上传音频文件作为强力铃声（起床/午休等时段使用）',
+    customRingtoneSet: '已上传自定义铃声',
+    customRingtoneNotSet: '未上传，使用内置强力铃声',
+    customRingtoneUpload: '上传铃声',
+    clearCustomRingtone: '恢复默认铃声',
+    clearCustomRingtoneDesc: '使用内置 clock-sound.wav',
+    testStrongRingtone: '试听强力铃声',
+    testNormalRingtone: '试听日常提醒铃声',
+
+    // 强力铃声时段
+    strongRingtoneSlots: '强力铃声时段',
+    strongRingtoneSlotsHint: '在这些时段内使用强力铃声（自定义或clock-sound.wav），其他时段使用日常提醒铃声',
+    addStrongSlot: '添加强力铃声时段',
+    removeSlot: '移除',
+    morningSlot: '早晨 6:00-8:00',
+    noonSlot: '午间 12:00-14:00',
+    eveningSlot: '晚间 21:00-23:00',
+    slotAdded: '时段已添加',
+
+    // 午休闹钟
+    napAlarm: '午休闹钟',
+    napAlarmEnabled: '启用午休闹钟',
+    napAlarmEnabledDesc: '每天定时提醒午休（使用强力铃声）',
+    napAlarmTime: '午休时间',
+
     // 显示设置
     theme: '主题模式',
     themeAuto: '跟随系统',

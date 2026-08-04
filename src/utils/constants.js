@@ -31,8 +31,19 @@ export const DEFAULT_SETTINGS = {
   wakeUpTime: '07:00',
   wakeUpSoundType: 'clock',  // 'alarm' | 'clock'
   wakeUpVolume: 0.9,
-  // 日程提醒铃声类型
+  // 日程提醒铃声类型（弃用，由 strongRingtoneSlots 接管）
   reminderSoundType: 'alarm',  // 'alarm' | 'clock'
+  // 自定义铃声 URI（用户上传），为空则使用内置 clock-sound.wav
+  customRingtoneUri: null,
+  // 强力铃声时段（clock-sound.wav 或自定义铃声）— 通常为起床和午休
+  // 格式: [{ start: '06:00', end: '08:00' }, { start: '12:30', end: '14:00' }]
+  strongRingtoneSlots: [
+    { start: '06:00', end: '08:00' },
+    { start: '12:30', end: '14:00' },
+  ],
+  // 午休闹钟（独立开关和时间）
+  napAlarmEnabled: false,
+  napAlarmTime: '13:00',
 };
 
 // 阶段关键词映射

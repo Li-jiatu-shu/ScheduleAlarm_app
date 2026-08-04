@@ -26,6 +26,7 @@ import ConfirmDialog from '../components/ConfirmDialog';
 import PrivacyModal from '../components/PrivacyModal';
 import { t, setLocale, getLocale } from '../i18n';
 import { formatDate, getToday } from '../utils/helpers';
+import * as DocumentPicker from 'expo-document-picker';
 
 export default function SettingsScreen() {
   const theme = useTheme();
@@ -144,6 +145,67 @@ export default function SettingsScreen() {
       Alert.alert('失败', e.message);
     }
   }, []);
+
+  // 上传自定义铃声
+  const handlePickRingtone = useCallback(async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['audio/*'],
+        copyToCacheDirectory: true,
+      });
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const file = result.assets[0];
+        updateSetting('customRingtoneUri', file.uri);
+        Alert.alert('成功', `已选择自定义铃声: ${file.name}`);
+      }
+    } catch (err) {
+      Alert.alert('选择失败', err.message);
+    }
+  }, [updateSetting]);
+
+  // 清除自定义铃声
+  const handleClearCustomRingtone = useCallback(() => {
+    updateSetting('customRingtoneUri', null);
+    Alert.alert('已清除', '已恢复使用内置强力铃声');
+  }, [updateSetting]);
+
+  // 切换强力铃声时段
+  const handleToggleStrongSlot = useCallback((index) => {
+    const slots = [...(settings.strongRingtoneSlots || [])];
+    if (slots[index]) {
+      slots.splice(index, 1);
+    }
+    updateSetting('strongRingtoneSlots', slots);
+  }, [settings.strongRingtoneSlots, updateSetting]);
+
+  // 添加强力铃声时段
+  const handleAddStrongSlot = useCallback(() => {
+    const slots = [...(settings.strongRingtoneSlots || [])];
+    // 预设选项
+    const presets = [
+      { start: '06:00', end: '08:00', label: '早晨 6:00-8:00' },
+      { start: '12:00', end: '14:00', label: '午间 12:00-14:00' },
+      { start: '21:00', end: '23:00', label: '晚间 21:00-23:00' },
+    ];
+    const existing = new Set(slots.map((s) => `${s.start}-${s.end}`));
+    const available = presets.filter((p) => !existing.has(`${p.start}-${p.end}`));
+
+    if (available.length === 0) {
+      Alert.alert('提示', '常用时段已全部添加');
+      return;
+    }
+
+    Alert.alert('添加强力铃声时段', '选择常用时段', [
+      ...available.map((p) => ({
+        text: p.label,
+        onPress: () => {
+          const newSlots = [...slots, { start: p.start, end: p.end }];
+          updateSetting('strongRingtoneSlots', newSlots);
+        },
+      })),
+      { text: t('common.cancel'), style: 'cancel' },
+    ]);
+  }, [settings.strongRingtoneSlots, updateSetting]);
 
   // 清除数据
   const handleClearData = useCallback(async () => {
@@ -360,54 +422,118 @@ export default function SettingsScreen() {
 
         {/* --- 铃声选择 --- */}
         <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
-          日程提醒铃声
+          铃声管理
         </Text>
         <View style={[styles.section, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          {/* 自定义铃声上传 */}
           <TouchableOpacity
             style={[styles.row, { borderBottomColor: theme.border }]}
-            onPress={() => {
-              const current = settings.reminderSoundType || 'alarm';
-              const next = current === 'alarm' ? 'clock' : 'alarm';
-              updateSetting('reminderSoundType', next);
-            }}
+            onPress={handlePickRingtone}
           >
             <View style={styles.rowTextGroup}>
               <Text style={[styles.rowLabel, { color: theme.textPrimary }]}>
-                {t('settings.ringtone')}
+                自定义强力铃声
               </Text>
               <Text style={[styles.rowDesc, { color: theme.textSecondary }]}>
-                {settings.reminderSoundType === 'clock'
-                  ? t('settings.ringtoneClockDesc')
-                  : t('settings.ringtoneAlarmDesc')}
+                {settings.customRingtoneUri
+                  ? '已上传自定义铃声（优先使用）'
+                  : '未上传，将使用内置 clock-sound.wav'}
               </Text>
             </View>
             <Text style={[styles.rowValue, { color: theme.primary }]}>
-              {settings.reminderSoundType === 'clock'
-                ? t('settings.ringtoneClock')
-                : t('settings.ringtoneAlarm')}
+              {settings.customRingtoneUri ? '📁 已设置' : '📤 上传'}
             </Text>
           </TouchableOpacity>
 
-          {/* 测试闹铃 */}
+          {/* 清除自定义铃声 */}
+          {settings.customRingtoneUri ? (
+            <TouchableOpacity
+              style={[styles.row, { borderBottomColor: theme.border }]}
+              onPress={handleClearCustomRingtone}
+            >
+              <Text style={[styles.rowLabel, { color: theme.danger }]}>
+                恢复默认铃声
+              </Text>
+              <Text style={[styles.rowValue, { color: theme.textSecondary }]}>
+                使用内置 clock-sound.wav
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+
+          {/* 测试强力铃声 */}
           <TouchableOpacity
-            style={[styles.row]}
+            style={[styles.row, { borderBottomColor: theme.border }]}
             onPress={() => {
-              const type = settings.reminderSoundType || 'alarm';
-              const vol = settings.alarmVolume || 0.8;
+              const customUri = settings.customRingtoneUri;
+              const vol = settings.wakeUpVolume || 0.9;
               playAlarm({
                 volume: vol,
-                soundType: type,
-                loop: type === 'clock',
+                soundType: customUri ? 'custom' : 'clock',
+                customUri,
+                loop: true,
               }).then((ctrl) => {
-                // 3秒后自动停止测试（长音频播5秒）
-                setTimeout(() => ctrl.stop(), type === 'clock' ? 5000 : 3000);
+                setTimeout(() => ctrl.stop(), 6000);
               });
             }}
           >
             <Text style={[styles.rowLabel, { color: theme.textPrimary }]}>
-              {t('settings.ttsTestButton')} 提醒铃声
+              试听强力铃声
+            </Text>
+            <Text style={[styles.rowValue, { color: theme.primary }]}>🔊</Text>
+          </TouchableOpacity>
+
+          {/* 测试日常提醒铃声 */}
+          <TouchableOpacity
+            style={[styles.row]}
+            onPress={() => {
+              const vol = settings.alarmVolume || 0.8;
+              playAlarm({
+                volume: vol,
+                soundType: 'alarm',
+                loop: true,
+              }).then((ctrl) => {
+                setTimeout(() => ctrl.stop(), 4000);
+              });
+            }}
+          >
+            <Text style={[styles.rowLabel, { color: theme.textPrimary }]}>
+              试听日常提醒铃声
             </Text>
             <Text style={[styles.rowValue, { color: theme.primary }]}>🔔</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* --- 强力铃声时段 --- */}
+        <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          强力铃声时段
+        </Text>
+        <Text style={[styles.sectionHint, { color: theme.textTertiary }]}>
+          在这些时段内，提醒将使用强力铃声（自定义或clock-sound.wav），其他时段使用日常提醒铃声（alarm-sound.wav）
+        </Text>
+        <View style={[styles.section, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          {(settings.strongRingtoneSlots || []).map((slot, idx) => (
+            <TouchableOpacity
+              key={`${slot.start}-${slot.end}`}
+              style={[styles.row, { borderBottomColor: theme.border }]}
+              onPress={() => handleToggleStrongSlot(idx)}
+            >
+              <Text style={[styles.rowLabel, { color: theme.textPrimary }]}>
+                ⏰ {slot.start} - {slot.end}
+              </Text>
+              <Text style={[styles.rowValue, { color: theme.danger }]}>
+                移除
+              </Text>
+            </TouchableOpacity>
+          ))}
+
+          {/* 添加强力时段按钮 */}
+          <TouchableOpacity
+            style={[styles.row]}
+            onPress={handleAddStrongSlot}
+          >
+            <Text style={[styles.rowLabel, { color: theme.primary }]}>
+              + 添加强力铃声时段
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -438,7 +564,7 @@ export default function SettingsScreen() {
           <TouchableOpacity
             style={[styles.row, { borderBottomColor: theme.border }]}
             onPress={() => {
-              const options = ['06:00', '06:30', '07:00', '07:30', '08:00', '08:30'];
+              const options = ['05:30', '06:00', '06:30', '07:00', '07:30', '08:00', '08:30'];
               const current = settings.wakeUpTime || '07:00';
               const idx = options.indexOf(current);
               const next = options[(idx + 1) % options.length];
@@ -458,22 +584,43 @@ export default function SettingsScreen() {
             <Text style={[styles.rowLabel, { color: theme.textPrimary }]}>
               {t('settings.wakeUpVolume')}
             </Text>
-            <Text style={[styles.rowValue, { color: theme.textSecondary }]}>
-              {Math.round((settings.wakeUpVolume || 0.9) * 100)}%
-            </Text>
+            <View style={styles.speedControl}>
+              <TouchableOpacity
+                style={[styles.speedBtn, { backgroundColor: theme.surfaceSecondary }]}
+                onPress={() => {
+                  const vol = Math.max(0.5, (settings.wakeUpVolume || 0.9) - 0.1);
+                  updateSetting('wakeUpVolume', Math.round(vol * 10) / 10);
+                }}
+              >
+                <Text style={[styles.speedBtnText, { color: theme.textPrimary }]}>−</Text>
+              </TouchableOpacity>
+              <Text style={[styles.speedValue, { color: theme.primary }]}>
+                {Math.round((settings.wakeUpVolume || 0.9) * 100)}%
+              </Text>
+              <TouchableOpacity
+                style={[styles.speedBtn, { backgroundColor: theme.surfaceSecondary }]}
+                onPress={() => {
+                  const vol = Math.min(1.0, (settings.wakeUpVolume || 0.9) + 0.1);
+                  updateSetting('wakeUpVolume', Math.round(vol * 10) / 10);
+                }}
+              >
+                <Text style={[styles.speedBtnText, { color: theme.textPrimary }]}>+</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* 测试起床铃声 */}
           <TouchableOpacity
             style={[styles.row]}
             onPress={() => {
+              const customUri = settings.customRingtoneUri;
               const vol = settings.wakeUpVolume || 0.9;
               playAlarm({
                 volume: vol,
-                soundType: 'clock',
+                soundType: customUri ? 'custom' : 'clock',
+                customUri,
                 loop: true,
               }).then((ctrl) => {
-                // 起床铃声较长，播8秒
                 setTimeout(() => ctrl.stop(), 8000);
               });
             }}
@@ -482,6 +629,49 @@ export default function SettingsScreen() {
               测试起床铃声
             </Text>
             <Text style={[styles.rowValue, { color: theme.primary }]}>⏰</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* --- 午休闹钟 --- */}
+        <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>
+          午休闹钟
+        </Text>
+        <View style={[styles.section, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          {/* 启用开关 */}
+          <View style={[styles.row, { borderBottomColor: theme.border }]}>
+            <View style={styles.rowTextGroup}>
+              <Text style={[styles.rowLabel, { color: theme.textPrimary }]}>
+                启用午休闹钟
+              </Text>
+              <Text style={[styles.rowDesc, { color: theme.textSecondary }]}>
+                每天定时提醒午休（使用强力铃声）
+              </Text>
+            </View>
+            <Switch
+              value={settings.napAlarmEnabled === true}
+              onValueChange={(val) => updateSetting('napAlarmEnabled', val)}
+              trackColor={{ false: theme.surfaceSecondary, true: theme.primaryLight }}
+              thumbColor={settings.napAlarmEnabled ? theme.primary : theme.textTertiary}
+            />
+          </View>
+
+          {/* 午休时间 */}
+          <TouchableOpacity
+            style={[styles.row]}
+            onPress={() => {
+              const options = ['12:00', '12:30', '13:00', '13:30', '14:00'];
+              const current = settings.napAlarmTime || '13:00';
+              const idx = options.indexOf(current);
+              const next = options[(idx + 1) % options.length];
+              updateSetting('napAlarmTime', next);
+            }}
+          >
+            <Text style={[styles.rowLabel, { color: theme.textPrimary }]}>
+              午休时间
+            </Text>
+            <Text style={[styles.rowValue, { color: theme.primary }]}>
+              {settings.napAlarmTime || '13:00'}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -692,6 +882,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 24,
     paddingBottom: 8,
+  },
+  sectionHint: {
+    fontSize: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    lineHeight: 18,
   },
   section: {
     marginHorizontal: 16,

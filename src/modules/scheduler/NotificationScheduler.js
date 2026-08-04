@@ -228,6 +228,38 @@ export async function cancelAllNotifications() {
 }
 
 /**
+ * 清除通知栏中所有已显示的通知
+ */
+export async function dismissAllDeliveredNotifications() {
+  try {
+    if (Notifications.dismissAllNotificationsAsync) {
+      await Notifications.dismissAllNotificationsAsync();
+    }
+  } catch (err) {
+    console.warn('清除已显示通知失败:', err);
+  }
+}
+
+/**
+ * 重调度所有未来通知（每日自动调用，确保提醒永久有效）
+ * @param {Object[]} events - 所有事件
+ * @param {Object} options
+ * @returns {Promise<number>} 调度的通知数量
+ */
+export async function rescheduleAllFutureNotifications(events, options = {}) {
+  try {
+    // 先清理所有已调度的通知
+    await cancelAllNotifications();
+    // 重新调度
+    const ids = await scheduleEventNotifications(events, options);
+    return ids.length;
+  } catch (err) {
+    console.warn('重调度通知失败:', err);
+    return 0;
+  }
+}
+
+/**
  * 获取所有已调度的通知数量
  * @returns {Promise<number>}
  */
@@ -280,6 +312,8 @@ export default {
   snoozeEvent,
   cancelEventNotification,
   cancelAllNotifications,
+  dismissAllDeliveredNotifications,
+  rescheduleAllFutureNotifications,
   getScheduledCount,
   findMissedEvents,
 };
